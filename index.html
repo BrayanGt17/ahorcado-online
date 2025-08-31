@@ -30,19 +30,6 @@
         }
         .copy-btn { cursor: pointer; transition: background-color 0.2s; }
         
-        /* Estilos Ahorcado */
-        .letter { width: 3rem; height: 3rem; font-size: 1.5rem; font-weight: 600; border-bottom: 3px solid #6b7280; display: inline-flex; justify-content: center; align-items: center; margin: 0 0.25rem; }
-        .keyboard-btn { width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; background-color: #e5e7eb; display: flex; justify-content: center; align-items: center; text-transform: uppercase; }
-        #hangman-svg g line { stroke: #1f2937; stroke-width: 4; stroke-linecap: round; }
-
-        /* Estilos Memoria */
-        .memory-card { width: 100%; height: 100px; cursor: pointer; position: relative; transform-style: preserve-3d; transition: transform 0.5s; border-radius: 0.75rem; }
-        .memory-card.is-flipped { transform: rotateY(180deg); }
-        .memory-card.is-matched { cursor: default; opacity: 0.5; }
-        .memory-card .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; border-radius: 0.75rem; }
-        .card-face.card-back { background-color: #4f46e5; color: white; }
-        .card-face.card-front { background-color: #e0e7ff; transform: rotateY(180deg); }
-
         /* Estilos Gato (Tic-Tac-Toe) */
         .tictactoe-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
         .tictactoe-cell {
@@ -55,6 +42,14 @@
         .tictactoe-cell.X { color: #ef4444; }
         .tictactoe-cell.O { color: #22c55e; }
         .tictactoe-cell.win { background-color: #fcd34d; }
+
+        /* Estilos Memoria */
+        .memory-card { width: 100%; height: 100px; cursor: pointer; position: relative; transform-style: preserve-3d; transition: transform 0.5s; border-radius: 0.75rem; }
+        .memory-card.is-flipped { transform: rotateY(180deg); }
+        .memory-card.is-matched { cursor: default; opacity: 0.5; }
+        .memory-card .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; border-radius: 0.75rem; }
+        .card-face.card-back { background-color: #4f46e5; color: white; }
+        .card-face.card-front { background-color: #e0e7ff; transform: rotateY(180deg); }
     </style>
 </head>
 <body class="bg-indigo-50 min-h-screen flex items-center justify-center p-4">
@@ -67,7 +62,7 @@
             <p class="text-gray-600 mb-8">Elige un juego para empezar.</p>
             <p class="text-sm text-gray-500 mb-4">Tu ID de Jugador: <strong id="player-id-display" class="text-indigo-600">Conectando...</strong></p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button data-game="hangman" class="game-select-btn btn btn-primary w-full sm:w-auto">Jugar Ahorcado</button>
+                <button data-game="hangman" class="game-select-btn btn btn-primary w-full sm:w-auto" disabled>Ahorcado (Próximamente)</button>
                 <button data-game="memory" class="game-select-btn btn btn-secondary w-full sm:w-auto">Jugar Memoria</button>
                 <button data-game="tictactoe" class="game-select-btn btn btn-primary w-full sm:w-auto bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-800">Jugar Gato</button>
             </div>
@@ -87,12 +82,7 @@
             <button class="back-to-selection-btn text-indigo-600 hover:underline mt-6">Volver al menú</button>
         </div>
         
-        <!-- Pantalla de Creación de Ahorcado -->
-        <div id="create-hangman-screen" class="hidden card text-center">
-             <!-- Contenido para crear partida de ahorcado -->
-        </div>
-
-        <!-- Pantalla de Espera (Ambos Juegos) -->
+        <!-- Pantalla de Espera -->
         <div id="waiting-screen" class="hidden card text-center">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Esperando oponente...</h2>
             <p class="text-gray-600 mb-2">Comparte este ID con tu amigo:</p>
@@ -101,30 +91,41 @@
             <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6">Cancelar</button>
         </div>
 
-        <!-- Pantalla de Juego AHORCADO -->
-        <div id="hangman-game-screen" class="hidden">
-            <!-- El HTML del juego de ahorcado irá aquí -->
-        </div>
-
         <!-- Pantalla de Juego MEMORIA -->
         <div id="memory-game-screen" class="hidden card">
-            <!-- El HTML del juego de memoria irá aquí -->
+            <div class="flex justify-between items-center mb-4">
+                <div id="memory-player1-score" class="text-lg font-bold">Jugador 1: 0</div>
+                <div id="memory-game-status" class="text-xl font-bold text-indigo-600"></div>
+                <div id="memory-player2-score" class="text-lg font-bold">Jugador 2: 0</div>
+            </div>
+            <div id="memory-board" class="grid grid-cols-4 gap-4 mb-4"></div>
+            <div id="memory-game-over" class="hidden text-center mt-4">
+                <h3 id="memory-winner-text" class="text-3xl font-bold mb-4"></h3>
+                <div id="memory-rematch-status" class="text-gray-600 mb-4"></div>
+                <div class="flex gap-4 justify-center">
+                    <button id="memory-rematch-btn" class="btn btn-primary">Pedir Revancha</button>
+                    <button class="back-to-lobby-btn btn btn-secondary">Salir al Lobby</button>
+                </div>
+            </div>
+            <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6 text-center block w-full">Salir de la partida</button>
         </div>
         
         <!-- Pantalla de Juego GATO (TIC-TAC-TOE) -->
-        <div id="tictactoe-game-screen" class="hidden card">
-            <div class="flex justify-between items-center mb-6">
+        <div id="tictactoe-game-screen" class="hidden card items-center flex flex-col">
+            <div class="flex justify-between items-center mb-6 w-full max-w-xs">
                  <div>Tu símbolo: <span id="tictactoe-player-symbol" class="font-bold text-2xl"></span></div>
                  <div id="tictactoe-game-status" class="text-xl font-bold text-indigo-600"></div>
             </div>
-            <div id="tictactoe-board" class="tictactoe-board mx-auto mb-6">
-                <!-- Las celdas se generarán aquí -->
-            </div>
-            <div id="tictactoe-game-over" class="hidden text-center">
+            <div id="tictactoe-board" class="tictactoe-board mx-auto mb-6"></div>
+            <div id="tictactoe-game-over" class="hidden text-center mt-4">
                 <h3 id="tictactoe-winner-text" class="text-3xl font-bold mb-4"></h3>
-                <button class="back-to-lobby-btn btn btn-primary">Jugar de Nuevo</button>
+                <div id="tictactoe-rematch-status" class="text-gray-600 mb-4"></div>
+                <div class="flex gap-4 justify-center">
+                    <button id="tictactoe-rematch-btn" class="btn btn-primary">Pedir Revancha</button>
+                    <button class="back-to-lobby-btn btn btn-secondary">Salir al Lobby</button>
+                </div>
             </div>
-             <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6 text-center block w-full">Salir de la partida</button>
+            <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6 text-center block w-full">Salir de la partida</button>
         </div>
 
     </div>
@@ -151,11 +152,9 @@
 
         const screens = {
             selection: document.getElementById('game-selection-screen'), lobby: document.getElementById('lobby-screen'),
-            createHangman: document.getElementById('create-hangman-screen'), waiting: document.getElementById('waiting-screen'),
-            hangmanGame: document.getElementById('hangman-game-screen'), memoryGame: document.getElementById('memory-game-screen'),
+            waiting: document.getElementById('waiting-screen'), memoryGame: document.getElementById('memory-game-screen'),
             tictactoeGame: document.getElementById('tictactoe-game-screen'),
         };
-        const playerIdDisplay = document.getElementById('player-id-display');
         
         const showScreen = (screenName) => {
             Object.values(screens).forEach(s => s.classList.add('hidden'));
@@ -165,7 +164,6 @@
         const goToLobby = (gameType) => {
             currentGameType = gameType;
             let title = '';
-            if (gameType === 'hangman') title = 'Ahorcado';
             if (gameType === 'memory') title = 'Memoria';
             if (gameType === 'tictactoe') title = 'Gato (Tres en Raya)';
             document.getElementById('lobby-title').textContent = title;
@@ -184,7 +182,7 @@
         };
         
         onAuthStateChanged(auth, (user) => {
-            if (user) { currentUser = user; playerIdDisplay.textContent = user.uid.substring(0, 8); } 
+            if (user) { currentUser = user; document.getElementById('player-id-display').textContent = user.uid.substring(0, 8); } 
             else { signInAnonymously(auth).catch(e => console.error(e)); }
         });
         
@@ -202,21 +200,13 @@
             let gameData;
 
             if (currentGameType === 'tictactoe') {
-                gameData = {
-                    gameType: 'tictactoe', hostId: currentUser.uid, opponentId: null,
-                    status: 'waiting', board: Array(9).fill(null), turn: currentUser.uid,
-                    hostSymbol: 'X', opponentSymbol: 'O', winner: null, winningLine: null
-                };
+                gameData = { gameType: 'tictactoe', hostId: currentUser.uid, opponentId: null, status: 'waiting', board: Array(9).fill(null), turn: currentUser.uid, hostSymbol: 'X', opponentSymbol: 'O', winner: null, winningLine: null, rematchRequests: [] };
             } else if (currentGameType === 'memory') {
                  const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
                  const cardValues = [...emojis, ...emojis].sort(() => 0.5 - Math.random());
                  const board = cardValues.map(value => ({ value, isFlipped: false, isMatched: false }));
-                 gameData = {
-                     gameType: 'memory', hostId: currentUser.uid, opponentId: null, status: 'waiting',
-                     board, turn: currentUser.uid, scores: { [currentUser.uid]: 0 }, flippedIndices: [],
-                 };
+                 gameData = { gameType: 'memory', hostId: currentUser.uid, opponentId: null, status: 'waiting', board, turn: currentUser.uid, scores: { [currentUser.uid]: 0 }, flippedIndices: [], rematchRequests: [] };
             }
-            // Add hangman creation logic here if needed
             
             await setDoc(doc(db, "games", gameId), gameData);
             listenToGameUpdates(gameId);
@@ -225,39 +215,23 @@
         };
         
         const joinGame = async () => {
-            if (!currentUser) { alert("Aún no te has conectado al servidor."); return; }
+            if (!currentUser) return;
             const gameId = document.getElementById('join-game-id-input').value.trim().toUpperCase();
-            if (!gameId) { alert("Por favor, ingresa un ID de juego."); return; }
-
+            if (!gameId) { alert("Ingresa un ID de juego."); return; }
             const gameRef = doc(db, "games", gameId);
             const gameSnap = await getDoc(gameRef);
 
             if (gameSnap.exists()) {
                 const gameData = gameSnap.data();
-
-                if (gameData.gameType !== currentGameType) {
-                    alert(`Ese ID es para una partida de otro juego. Por favor, selecciona el juego correcto en el menú principal.`);
-                    return;
-                }
-
+                if (gameData.gameType !== currentGameType) { alert(`Ese ID es de una partida de ${gameData.gameType}.`); return; }
                 if (gameData.status === 'waiting' && gameData.hostId !== currentUser.uid) {
                     let updates = { opponentId: currentUser.uid, status: 'playing' };
-                    if (gameData.gameType === 'memory') {
-                        updates['scores'] = { ...gameData.scores, [currentUser.uid]: 0 };
-                    }
+                    if (gameData.gameType === 'memory') updates.scores = { ...gameData.scores, [currentUser.uid]: 0 };
                     await updateDoc(gameRef, updates);
-                    currentGameId = gameId;
-                    listenToGameUpdates(gameId);
-                } else if (gameData.hostId === currentUser.uid || gameData.opponentId === currentUser.uid) {
-                     // Player is rejoining their own game
-                     currentGameId = gameId;
-                     listenToGameUpdates(gameId);
-                } else {
-                     alert("No puedes unirte a esta partida. Ya está llena.");
                 }
-            } else {
-                alert("No se encontró ninguna partida con ese ID.");
-            }
+                currentGameId = gameId;
+                listenToGameUpdates(gameId);
+            } else { alert("Partida no encontrada."); }
         };
 
         const listenToGameUpdates = (gameId) => {
@@ -267,59 +241,109 @@
                 const gameData = docSnap.data();
                 if (gameData.gameType === 'tictactoe') renderTicTacToeUI(gameData);
                 else if (gameData.gameType === 'memory') renderMemoryUI(gameData);
-                // else if (gameData.gameType === 'hangman') renderHangmanUI(gameData);
             });
         };
+        
+        // --- LÓGICA DE REVANCHA (REMATCH) ---
+        const requestRematch = async () => {
+            if (!currentGameId || !currentUser) return;
+            const gameRef = doc(db, "games", currentGameId);
+            const gameSnap = await getDoc(gameRef);
+            if (!gameSnap.exists()) return;
 
-        // --- LÓGICA DE GATO (TIC-TAC-TOE) ---
-        const tttBoard = document.getElementById('tictactoe-board');
-        const tttStatus = document.getElementById('tictactoe-game-status');
-        const tttSymbol = document.getElementById('tictactoe-player-symbol');
+            const gameData = gameSnap.data();
+            let rematchRequests = gameData.rematchRequests || [];
+            if (rematchRequests.includes(currentUser.uid)) return;
 
-        const renderTicTacToeUI = (game) => {
-            if (game.status === 'waiting') { 
+            rematchRequests.push(currentUser.uid);
+
+            if (rematchRequests.length === 2) {
+                if (gameData.gameType === 'tictactoe') resetTicTacToeGame(gameRef, gameData);
+                if (gameData.gameType === 'memory') resetMemoryGame(gameRef, gameData);
+            } else {
+                await updateDoc(gameRef, { rematchRequests });
+            }
+        };
+
+        const resetTicTacToeGame = async (gameRef, gameData) => {
+            await updateDoc(gameRef, { board: Array(9).fill(null), status: 'playing', turn: gameData.hostId, winner: null, winningLine: null, rematchRequests: [] });
+        };
+
+        const resetMemoryGame = async (gameRef, gameData) => {
+            const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+            const cardValues = [...emojis, ...emojis].sort(() => 0.5 - Math.random());
+            const board = cardValues.map(value => ({ value, isFlipped: false, isMatched: false }));
+            await updateDoc(gameRef, { board, status: 'playing', turn: gameData.hostId, scores: { [gameData.hostId]: 0, [gameData.opponentId]: 0 }, flippedIndices: [], rematchRequests: [] });
+        };
+        
+        // --- RENDERIZADO COMPLETO DE UI (con Revancha) ---
+        function setupRematchUI(game, elements) {
+            const requests = game.rematchRequests || [];
+            elements.gameOverContainer.classList.remove('hidden');
+            elements.rematchStatus.textContent = '';
+            
+            if (requests.length === 1 && !requests.includes(currentUser.uid)) {
+                elements.rematchBtn.textContent = 'Aceptar Revancha';
+                elements.rematchStatus.textContent = '¡Tu oponente quiere la revancha!';
+                elements.rematchBtn.disabled = false;
+            } else if (requests.includes(currentUser.uid)) {
+                elements.rematchBtn.textContent = 'Esperando...';
+                elements.rematchStatus.textContent = 'Esperando la respuesta de tu oponente.';
+                elements.rematchBtn.disabled = true;
+            } else {
+                elements.rematchBtn.textContent = 'Pedir Revancha';
+                elements.rematchBtn.disabled = false;
+            }
+            
+            const newBtn = elements.rematchBtn.cloneNode(true);
+            elements.rematchBtn.parentNode.replaceChild(newBtn, elements.rematchBtn);
+            newBtn.addEventListener('click', requestRematch);
+        }
+
+        // --- RENDERIZADO UI DE GATO (completo) ---
+        function renderTicTacToeUI(game) {
+            if (game.status === 'waiting') {
                 document.getElementById('waiting-game-id').textContent = currentGameId;
-                showScreen('waiting'); 
-                return; 
+                showScreen('waiting'); return;
             }
             showScreen('tictactoeGame');
-            tttBoard.innerHTML = '';
-
+            const boardEl = document.getElementById('tictactoe-board');
+            boardEl.innerHTML = '';
+            
             const isHost = currentUser.uid === game.hostId;
-            const playerSymbol = isHost ? game.hostSymbol : game.opponentSymbol;
-            tttSymbol.textContent = playerSymbol;
+            document.getElementById('tictactoe-player-symbol').textContent = isHost ? game.hostSymbol : game.opponentSymbol;
 
             game.board.forEach((cell, index) => {
                 const cellEl = document.createElement('div');
-                cellEl.classList.add('tictactoe-cell');
-                if (cell) {
-                    cellEl.textContent = cell;
-                    cellEl.classList.add('filled', cell);
-                }
-                if (game.winningLine && game.winningLine.includes(index)) {
-                    cellEl.classList.add('win');
-                }
+                cellEl.className = 'tictactoe-cell';
+                if(cell) cellEl.classList.add('filled', cell);
+                if(game.winningLine?.includes(index)) cellEl.classList.add('win');
+                cellEl.textContent = cell;
                 if (game.status === 'playing' && game.turn === currentUser.uid && !cell) {
                     cellEl.addEventListener('click', () => handleCellClick(index, game));
                 }
-                tttBoard.appendChild(cellEl);
+                boardEl.appendChild(cellEl);
             });
-
+            
+            document.getElementById('tictactoe-game-over').classList.add('hidden');
             if (game.status === 'playing') {
-                tttStatus.textContent = game.turn === currentUser.uid ? "¡Tu Turno!" : "Turno del Oponente";
+                document.getElementById('tictactoe-game-status').textContent = game.turn === currentUser.uid ? "¡Tu Turno!" : "Turno del Oponente";
             } else if (game.status === 'finished') {
                 const winnerText = document.getElementById('tictactoe-winner-text');
-                if (game.winner === 'draw') {
-                    winnerText.textContent = "¡Es un Empate!";
-                } else {
+                if (game.winner === 'draw') winnerText.textContent = "¡Es un Empate!";
+                else {
+                    const playerSymbol = isHost ? game.hostSymbol : game.opponentSymbol;
                     const winnerSymbol = game.board[game.winningLine[0]];
                     winnerText.textContent = (playerSymbol === winnerSymbol) ? "¡Felicidades, Ganaste!" : "¡Perdiste!";
                 }
-                document.getElementById('tictactoe-game-over').classList.remove('hidden');
-                tttStatus.textContent = "Juego Terminado";
+                document.getElementById('tictactoe-game-status').textContent = "Juego Terminado";
+                setupRematchUI(game, {
+                    gameOverContainer: document.getElementById('tictactoe-game-over'),
+                    rematchBtn: document.getElementById('tictactoe-rematch-btn'),
+                    rematchStatus: document.getElementById('tictactoe-rematch-status')
+                });
             }
-        };
-        
+        }
         const handleCellClick = async (index, game) => {
             if (game.turn !== currentUser.uid || game.board[index] !== null) return;
             const gameRef = doc(db, "games", currentGameId);
@@ -340,7 +364,6 @@
 
             await updateDoc(gameRef, { board: newBoard, turn: nextTurn, status: newStatus, winner, winningLine });
         };
-        
         const checkWinner = (board) => {
             const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
             for (let i = 0; i < lines.length; i++) {
@@ -352,11 +375,82 @@
             if (!board.includes(null)) return { winner: 'draw', line: null };
             return null;
         };
-        
-        // --- LÓGICA DE MEMORIA --- (sin cambios, omitido por brevedad)
-        const renderMemoryUI = (game) => { /* ... */ };
-        
+
+        // --- RENDERIZADO UI DE MEMORIA (completo) ---
+        function renderMemoryUI(game) {
+            if (game.status === 'waiting') {
+                document.getElementById('waiting-game-id').textContent = currentGameId;
+                showScreen('waiting'); return;
+            }
+            showScreen('memoryGame');
+            
+            const boardEl = document.getElementById('memory-board');
+            const p1ScoreEl = document.getElementById('memory-player1-score');
+            const p2ScoreEl = document.getElementById('memory-player2-score');
+            const statusEl = document.getElementById('memory-game-status');
+            boardEl.innerHTML = '';
+
+            p1ScoreEl.textContent = `${game.hostId === currentUser.uid ? 'Tú' : 'Oponente'}: ${game.scores[game.hostId] || 0}`;
+            p2ScoreEl.textContent = game.opponentId ? `${game.opponentId === currentUser.uid ? 'Tú' : 'Oponente'}: ${game.scores[game.opponentId] || 0}`: 'Esperando...';
+
+            game.board.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'memory-card';
+                if (card.isFlipped) cardEl.classList.add('is-flipped');
+                if (card.isMatched) cardEl.classList.add('is-matched');
+                cardEl.innerHTML = `<div class="card-face card-back">?</div><div class="card-face card-front">${card.value}</div>`;
+                if (!card.isMatched && game.status === 'playing' && game.turn === currentUser.uid) {
+                    cardEl.addEventListener('click', () => handleCardClick(index, game));
+                }
+                boardEl.appendChild(cardEl);
+            });
+
+            document.getElementById('memory-game-over').classList.add('hidden');
+            if (game.status === 'playing') {
+                statusEl.textContent = game.turn === currentUser.uid ? "¡Tu Turno!" : "Turno del Oponente";
+                const allMatched = game.board.every(c => c.isMatched);
+                if(allMatched) updateDoc(doc(db, "games", currentGameId), { status: 'finished'});
+            } else if (game.status === 'finished') {
+                const p1s = game.scores[game.hostId], p2s = game.scores[game.opponentId];
+                let msg = "¡Empate!";
+                if(p1s > p2s) msg = game.hostId === currentUser.uid ? "¡Ganaste!" : "¡Perdiste!";
+                if(p2s > p1s) msg = game.opponentId === currentUser.uid ? "¡Ganaste!" : "¡Perdiste!";
+                document.getElementById('memory-winner-text').textContent = msg;
+                statusEl.textContent = "Juego Terminado";
+                setupRematchUI(game, {
+                    gameOverContainer: document.getElementById('memory-game-over'),
+                    rematchBtn: document.getElementById('memory-rematch-btn'),
+                    rematchStatus: document.getElementById('memory-rematch-status')
+                });
+            }
+        }
+        const handleCardClick = async (index, game) => {
+             if (game.flippedIndices.length >= 2 || game.board[index].isFlipped || game.turn !== currentUser.uid) return;
+            const gameRef = doc(db, "games", currentGameId);
+            const newFlippedIndices = [...game.flippedIndices, index];
+            game.board[index].isFlipped = true;
+            await updateDoc(gameRef, { board: game.board, flippedIndices: newFlippedIndices });
+            if (newFlippedIndices.length === 2) {
+                setTimeout(async () => {
+                    const [i1, i2] = newFlippedIndices;
+                    const card1 = game.board[i1], card2 = game.board[i2];
+                    let nextTurn = game.turn;
+                    if (card1.value === card2.value) {
+                        game.board[i1].isMatched = true;
+                        game.board[i2].isMatched = true;
+                        game.scores[currentUser.uid]++;
+                    } else {
+                        game.board[i1].isFlipped = false;
+                        game.board[i2].isFlipped = false;
+                        nextTurn = game.turn === game.hostId ? game.opponentId : game.hostId;
+                    }
+                    await updateDoc(gameRef, { board: game.board, scores: game.scores, flippedIndices: [], turn: nextTurn });
+                }, 1000);
+            }
+        };
+
         showScreen('selection');
+
     </script>
 </body>
 </html>
