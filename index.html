@@ -178,7 +178,7 @@
                     <div id="game-info" class="text-center text-gray-600 mb-6 min-h-[3.5rem]"></div>
                     <div id="word-display" class="flex justify-center mb-8"></div>
 
-                    <!-- NUEVA SECCIÓN DE PISTA -->
+                    <!-- SECCIÓN DE PISTA -->
                     <div class="text-center mb-4">
                         <button id="show-hint-btn" class="hidden btn btn-secondary btn-sm">Pedir Pista (-1 intento)</button>
                         <p id="hint-display" class="hidden bg-yellow-100 text-yellow-800 p-3 rounded-lg"><strong>Pista:</strong> <span id="hint-text"></span></p>
@@ -223,8 +223,7 @@
             console.log("Firebase inicializado correctamente.");
         } catch (error) {
             console.error("Error al inicializar Firebase. Revisa tu 'firebaseConfig'.", error);
-            const playerIdDisplay = document.getElementById('player-id-display');
-            if(playerIdDisplay) playerIdDisplay.textContent = "Error de configuración";
+            document.getElementById('player-id-display').textContent = "Error de configuración";
         }
 
         // --- VARIABLES GLOBALES ---
@@ -232,11 +231,7 @@
         let currentGameId = null;
         let gameUnsubscribe = null;
         const MAX_ATTEMPTS = 6;
-        
-        const hangmanParts = [
-            '#body-parts circle', '#body-parts line:nth-of-type(1)', '#body-parts line:nth-of-type(2)',
-            '#body-parts line:nth-of-type(3)', '#body-parts line:nth-of-type(4)', '#body-parts line:nth-of-type(5)',
-        ];
+        const hangmanParts = ['#body-parts circle', '#body-parts line:nth-of-type(1)', '#body-parts line:nth-of-type(2)', '#body-parts line:nth-of-type(3)', '#body-parts line:nth-of-type(4)', '#body-parts line:nth-of-type(5)'];
 
         // --- ELEMENTOS DEL DOM ---
         const screens = { home: document.getElementById('home-screen'), create: document.getElementById('create-game-screen'), game: document.getElementById('game-screen') };
@@ -248,7 +243,7 @@
         const joinGameBtn = document.getElementById('join-game-btn');
         const gameIdDisplay = document.getElementById('game-id-display');
         const secretWordInput = document.getElementById('secret-word-input');
-        const secretWordHintInput = document.getElementById('secret-word-hint-input'); // Nuevo
+        const secretWordHintInput = document.getElementById('secret-word-hint-input');
         const startGameBtn = document.getElementById('start-game-btn');
         const gameInfo = document.getElementById('game-info');
         const wordDisplay = document.getElementById('word-display');
@@ -260,9 +255,9 @@
         const attemptsLeftDisplay = document.getElementById('attempts-left');
         const hangmanBodyParts = document.querySelector('#body-parts');
         const backButtons = [document.getElementById('back-to-home-from-create'), document.getElementById('back-to-home-from-game')];
-        const showHintBtn = document.getElementById('show-hint-btn'); // Nuevo
-        const hintDisplay = document.getElementById('hint-display'); // Nuevo
-        const hintText = document.getElementById('hint-text'); // Nuevo
+        const showHintBtn = document.getElementById('show-hint-btn');
+        const hintDisplay = document.getElementById('hint-display');
+        const hintText = document.getElementById('hint-text');
         
         // --- LÓGICA DE NAVEGACIÓN ---
         const showScreen = (screenName) => {
@@ -289,17 +284,15 @@
         const copyToClipboard = (text, element) => {
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = element.textContent;
-                const originalBg = element.className;
+                const originalClassName = element.className;
                 element.textContent = '¡ID Copiado!';
                 element.classList.remove('bg-indigo-100');
                 element.classList.add('bg-green-200');
                 setTimeout(() => {
                     element.textContent = originalText;
-                    element.className = originalBg;
+                    element.className = originalClassName;
                 }, 1500);
-            }).catch(err => {
-                console.error('Error al copiar: ', err);
-            });
+            }).catch(err => console.error('Error al copiar: ', err));
         };
 
         // --- LÓGICA DEL JUEGO ---
@@ -334,7 +327,6 @@
 
         const joinGame = async () => {
             if (!currentUser) { alert("Aún no se ha conectado con el servidor."); return; }
-
             const gameId = joinGameIdInput.value.trim().toUpperCase();
             if (!gameId) { alert("Por favor, ingresa un ID de juego."); return; }
 
@@ -348,7 +340,6 @@
                 } else if (gameData.guesserId && gameData.guesserId !== currentUser.uid && gameData.hostId !== currentUser.uid) {
                     alert("Este juego ya está lleno."); return;
                 }
-                
                 currentGameId = gameId;
                 listenToGameUpdates(gameId);
                 showScreen('game');
@@ -372,7 +363,6 @@
 
         const updateUI = (game) => {
             if (!currentUser) return;
-
             if (game.status === 'waiting_for_word') { showScreen('create'); return; }
             
             const isGuesser = currentUser.uid === game.guesserId;
@@ -381,7 +371,7 @@
             if (game.status === 'waiting_for_guesser' && isHost) {
                 showScreen('game');
                 gameInfo.innerHTML = `Esperando a tu amigo...<br><span class="text-sm">Comparte el ID: </span><strong class="copy-btn bg-indigo-100 text-indigo-800 p-1 rounded" title="Haz clic para copiar">${currentGameId}</strong>`;
-                document.querySelector('#game-info .copy-btn').addEventListener('click', (e) => copyToClipboard(currentGameId, e.target));
+                document.querySelector('#game-info .copy-btn')?.addEventListener('click', (e) => copyToClipboard(currentGameId, e.target));
                 wordDisplay.innerHTML = '';
                 keyboardContainer.innerHTML = '<p class="col-span-7 text-center text-gray-500">El teclado aparecerá cuando comience la partida.</p>';
                 showHintBtn.classList.add('hidden');
@@ -396,7 +386,6 @@
             renderHangman(game.incorrectGuesses);
             attemptsLeftDisplay.textContent = MAX_ATTEMPTS - game.incorrectGuesses;
 
-            // Lógica de Pista
             if (isGuesser && game.hint && !game.hintUsed && game.status === 'playing') {
                 showHintBtn.classList.remove('hidden');
             } else {
@@ -409,13 +398,11 @@
                 hintDisplay.classList.add('hidden');
             }
 
-            // Lógica de mensajes y estado del juego
             if (game.status === 'playing') {
                 gameInfo.textContent = isGuesser ? '¡Es tu turno! Adivina una letra.' : 'Tu amigo está adivinando...';
             }
             
             const wordIsGuessed = game.word && [...game.word].every(letter => game.guessedLetters.includes(letter));
-
             if (game.status === 'playing' && wordIsGuessed) { updateGameStatus('won'); return; }
             if (game.status === 'playing' && game.incorrectGuesses >= MAX_ATTEMPTS) { updateGameStatus('lost'); return; }
 
@@ -475,10 +462,8 @@
             const gameRef = doc(db, "games", currentGameId);
             const gameSnap = await getDoc(gameRef);
             if (!gameSnap.exists()) return;
-
             const gameData = gameSnap.data();
             if (gameData.guesserId !== currentUser.uid || gameData.guessedLetters.includes(letter) || gameData.status !== 'playing') return;
-
             await updateDoc(gameRef, {
                 guessedLetters: [...gameData.guessedLetters, letter],
                 incorrectGuesses: gameData.word.includes(letter) ? gameData.incorrectGuesses : gameData.incorrectGuesses + 1
@@ -489,9 +474,14 @@
             const gameRef = doc(db, "games", currentGameId);
             const gameSnap = await getDoc(gameRef);
             if (!gameSnap.exists()) return;
-
             const gameData = gameSnap.data();
-            if (gameData.guesserId !== currentUser.uid || gameData.hintUsed || game.status !== 'playing') return;
+            
+            // --- ¡AQUÍ ESTABA EL ERROR! ---
+            // Se usaba 'game.status' en lugar de 'gameData.status'
+            if (gameData.guesserId !== currentUser.uid || gameData.hintUsed || gameData.status !== 'playing') {
+                console.log("No se puede usar la pista en este momento.");
+                return;
+            }
             
             await updateDoc(gameRef, {
                 hintUsed: true,
@@ -503,13 +493,11 @@
              if (gameUnsubscribe) { gameUnsubscribe(); gameUnsubscribe = null; }
              const oldGameId = currentGameId;
              currentGameId = null;
-
              if(oldGameId && currentUser) {
                 const gameRef = doc(db, "games", oldGameId);
                 const gameSnap = await getDoc(gameRef);
                 if(gameSnap.exists() && gameSnap.data().hostId === currentUser.uid) await deleteDoc(gameRef);
              }
-             
              secretWordInput.value = '';
              secretWordHintInput.value = '';
              joinGameIdInput.value = '';
@@ -529,7 +517,6 @@
 
         // Iniciar la aplicación
         showScreen('home');
-
     </script>
 </body>
 </html>
