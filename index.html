@@ -122,7 +122,7 @@
         <div id="home-screen" class="card text-center">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">Ahorcado Online</h1>
             <p class="text-gray-600 mb-8">Juega con un amigo en tiempo real.</p>
-            <p class="text-sm text-gray-500 mb-4">Tu ID de Jugador: <strong id="player-id-display" class="text-indigo-600">Cargando...</strong></p>
+            <p class="text-sm text-gray-500 mb-4">Tu ID de Jugador: <strong id="player-id-display" class="text-indigo-600">Conectando...</strong></p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <button id="create-game-btn" class="btn btn-primary w-full sm:w-auto">Crear Juego Nuevo</button>
                 <button id="show-join-form-btn" class="btn btn-secondary w-full sm:w-auto">Unirse a un Juego</button>
@@ -193,14 +193,28 @@
         import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURACIÓN DE FIREBASE ---
-        // La configuración real de Firebase se inyectará aquí en un entorno de producción
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hangman-online-default';
+        // ¡Estas son tus credenciales personales que acabas de generar!
+        const firebaseConfig = {
+          apiKey: "AIzaSyDINBW5HbAd0m4TNwXfRLeHOUm-sPiux_0",
+          authDomain: "juego-ahorcado-online.firebaseapp.com",
+          projectId: "juego-ahorcado-online",
+          storageBucket: "juego-ahorcado-online.firebasestorage.app",
+          messagingSenderId: "672093029492",
+          appId: "1:672093029492:web:744571a8ae3a16845ebd21"
+        };
 
         // --- INICIALIZACIÓN DE FIREBASE ---
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            console.log("Firebase inicializado correctamente.");
+        } catch (error) {
+            console.error("Error al inicializar Firebase. Revisa tu 'firebaseConfig'.", error);
+            const playerIdDisplay = document.getElementById('player-id-display');
+            if(playerIdDisplay) playerIdDisplay.textContent = "Error de configuración";
+        }
 
         // --- VARIABLES GLOBALES ---
         let currentUser = null;
@@ -241,8 +255,6 @@
         const newGameBtn = document.getElementById('new-game-btn');
         const attemptsLeftDisplay = document.getElementById('attempts-left');
         const hangmanBodyParts = document.querySelector('#body-parts');
-
-        // Botones para volver
         const backButtons = [
             document.getElementById('back-to-home-from-create'),
             document.getElementById('back-to-home-from-game'),
@@ -257,29 +269,31 @@
         };
 
         // --- LÓGICA DE AUTENTICACIÓN ---
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                playerIdDisplay.textContent = user.uid;
-            } else {
-                signInAnonymously(auth).catch(error => {
-                    console.error("Error al iniciar sesión anónimamente:", error);
-                    playerIdDisplay.textContent = "Error de conexión";
-                });
-            }
-        });
+        if (auth) {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    console.log("Usuario autenticado:", user.uid);
+                    currentUser = user;
+                    playerIdDisplay.textContent = user.uid;
+                } else {
+                    signInAnonymously(auth).catch(error => {
+                        console.error("Error al iniciar sesión anónimamente:", error);
+                        playerIdDisplay.textContent = "Error de conexión";
+                    });
+                }
+            });
+        }
 
         // --- LÓGICA DEL JUEGO ---
-
         const createGame = async () => {
             if (!currentUser) {
-                alert("Espera a que se establezca la conexión.");
+                alert("Aún no se ha conectado con el servidor. Por favor, espera un momento.");
                 return;
             }
             
             const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
             currentGameId = gameId;
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+            const gameRef = doc(db, "games", gameId);
             
             await setDoc(gameRef, {
                 hostId: currentUser.uid,
@@ -287,8 +301,7 @@
                 word: '',
                 guessedLetters: [],
                 incorrectGuesses: 0,
-                status: 'waiting_for_word', // 'waiting_for_guesser', 'playing', 'won', 'lost'
-                turn: null,
+                status: 'waiting_for_word',
                 createdAt: new Date(),
             });
 
@@ -304,7 +317,7 @@
                 return;
             }
 
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+            const gameRef = doc(db, "games", currentGameId);
             await updateDoc(gameRef, {
                 word: word,
                 status: 'waiting_for_guesser'
@@ -313,7 +326,7 @@
 
         const joinGame = async () => {
             if (!currentUser) {
-                alert("Espera a que se establezca la conexión.");
+                alert("Aún no se ha conectado con el servidor. Por favor, espera un momento.");
                 return;
             }
 
@@ -323,7 +336,7 @@
                 return;
             }
 
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+            const gameRef = doc(db, "games", gameId);
             const gameSnap = await getDoc(gameRef);
 
             if (gameSnap.exists()) {
@@ -333,8 +346,7 @@
                 } else if (!gameData.guesserId) {
                     await updateDoc(gameRef, {
                         guesserId: currentUser.uid,
-                        status: 'playing',
-                        turn: gameData.hostId, // Empieza el turno del que adivina (el que se une)
+                        status: 'playing'
                     });
                 } else if (gameData.guesserId !== currentUser.uid) {
                     alert("Este juego ya está lleno.");
@@ -353,19 +365,23 @@
             if (gameUnsubscribe) {
                 gameUnsubscribe();
             }
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+            const gameRef = doc(db, "games", gameId);
             gameUnsubscribe = onSnapshot(gameRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const gameData = docSnap.data();
                     updateUI(gameData);
                 } else {
-                    alert("La partida ha terminado o ha sido eliminada.");
-                    resetToHome();
+                    if (currentGameId) { // Only show alert if we were in a game
+                        alert("La partida ha terminado o ha sido eliminada.");
+                        resetToHome();
+                    }
                 }
             });
         };
 
         const updateUI = (game) => {
+            if (!currentUser) return;
+
             if (game.status === 'waiting_for_word') {
                  showScreen('create');
                  return;
@@ -383,15 +399,14 @@
                  showScreen('game');
             }
             
+            const isGuesser = currentUser.uid === game.guesserId;
+            const isHost = currentUser.uid === game.hostId;
+
             renderWord(game.word, game.guessedLetters);
-            renderKeyboard(game.guessedLetters, game.word);
+            renderKeyboard(game.guessedLetters, game.word, game.status, isGuesser);
             renderHangman(game.incorrectGuesses);
             
             attemptsLeftDisplay.textContent = MAX_ATTEMPTS - game.incorrectGuesses;
-
-            const isHost = currentUser.uid === game.hostId;
-            const isGuesser = currentUser.uid === game.guesserId;
-            const isMyTurn = isGuesser; // Solo el que adivina puede hacer clic en las letras
 
             let infoText = '';
             if (game.status === 'playing') {
@@ -404,36 +419,39 @@
             
             gameInfo.textContent = infoText;
             
-            // Lógica de fin de juego
-            const wordIsGuessed = game.word.split('').every(letter => game.guessedLetters.includes(letter));
+            const wordIsGuessed = game.word && game.word.length > 0 && game.word.split('').every(letter => game.guessedLetters.includes(letter));
 
-            if (wordIsGuessed && game.word.length > 0) {
-                updateGameStatus(game.status !== 'won' ? 'won' : null);
-            } else if (game.incorrectGuesses >= MAX_ATTEMPTS) {
-                updateGameStatus(game.status !== 'lost' ? 'lost' : null);
+            if (game.status === 'playing' && wordIsGuessed) {
+                updateGameStatus('won');
+                return;
+            } else if (game.status === 'playing' && game.incorrectGuesses >= MAX_ATTEMPTS) {
+                updateGameStatus('lost');
+                return;
             }
 
             if (game.status === 'won') {
-                gameOverText.textContent = "¡Felicidades, has ganado!";
+                gameOverText.textContent = isGuesser ? "¡Felicidades, has ganado!" : "¡Tu pareja ha ganado!";
                 gameOverText.className = "text-3xl font-bold text-green-500";
                 correctWordDisplay.textContent = game.word;
                 gameOverMessage.classList.remove('hidden');
                 keyboardContainer.classList.add('hidden');
             } else if (game.status === 'lost') {
-                gameOverText.textContent = "¡Oh no, has perdido!";
+                gameOverText.textContent = isGuesser ? "¡Oh no, has perdido!" : "Tu pareja ha perdido.";
                 gameOverText.className = "text-3xl font-bold text-red-500";
                 correctWordDisplay.textContent = game.word;
                 gameOverMessage.classList.remove('hidden');
                 keyboardContainer.classList.add('hidden');
+            } else {
+                gameOverMessage.classList.add('hidden');
+                keyboardContainer.classList.remove('hidden');
             }
         };
         
         const updateGameStatus = async (newStatus) => {
             if (!newStatus || !currentGameId) return;
-             const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+             const gameRef = doc(db, "games", currentGameId);
              await updateDoc(gameRef, { status: newStatus });
         }
-
 
         const renderWord = (word, guessedLetters) => {
             wordDisplay.innerHTML = '';
@@ -446,11 +464,10 @@
             });
         };
 
-        const renderKeyboard = (guessedLetters, word) => {
+        const renderKeyboard = (guessedLetters, word, status, isGuesser) => {
             keyboardContainer.innerHTML = '';
             const alphabet = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
-            const isGuesser = document.getElementById('game-info').textContent.includes('¡Es tu turno!');
-            const gameIsOver = gameOverMessage.classList.contains('hidden') === false;
+            const gameIsOver = status === 'won' || status === 'lost';
 
             alphabet.split('').forEach(letter => {
                 const button = document.createElement('button');
@@ -469,8 +486,6 @@
         };
         
         const renderHangman = (incorrectGuesses) => {
-             // Reset
-             hangmanBodyParts.classList.add('hidden');
              hangmanParts.forEach(part => {
                  const el = document.querySelector(part);
                  if (el) el.style.visibility = 'hidden';
@@ -479,19 +494,23 @@
              if (incorrectGuesses > 0) {
                  hangmanBodyParts.classList.remove('hidden');
                  for (let i = 0; i < incorrectGuesses; i++) {
-                     const el = document.querySelector(hangmanParts[i]);
-                     if (el) el.style.visibility = 'visible';
+                     if (hangmanParts[i]) {
+                        const el = document.querySelector(hangmanParts[i]);
+                        if (el) el.style.visibility = 'visible';
+                     }
                  }
+             } else {
+                 hangmanBodyParts.classList.add('hidden');
              }
         };
 
         const handleGuess = async (letter) => {
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+            const gameRef = doc(db, "games", currentGameId);
             const gameSnap = await getDoc(gameRef);
 
             if (gameSnap.exists()) {
                 const gameData = gameSnap.data();
-                if (gameData.guessedLetters.includes(letter) || gameData.status !== 'playing') return;
+                if (gameData.guesserId !== currentUser.uid || gameData.guessedLetters.includes(letter) || gameData.status !== 'playing') return;
 
                 const newGuessedLetters = [...gameData.guessedLetters, letter];
                 let newIncorrectGuesses = gameData.incorrectGuesses;
@@ -513,21 +532,23 @@
                  gameUnsubscribe = null;
              }
 
-             // Limpiar el juego de la base de datos si eres el host
-             if(currentGameId) {
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-                const gameSnap = await getDoc(gameRef);
-                if(gameSnap.exists() && gameSnap.data().hostId === currentUser.uid) {
-                    await deleteDoc(gameRef).catch(e => console.error("Error al borrar el juego: ", e));
-                }
+             const oldGameId = currentGameId;
+             currentGameId = null;
+
+             if(oldGameId && currentUser) {
+                const gameRef = doc(db, "games", oldGameId);
+                try {
+                    const gameSnap = await getDoc(gameRef);
+                    if(gameSnap.exists() && gameSnap.data().hostId === currentUser.uid) {
+                        await deleteDoc(gameRef);
+                    }
+                } catch(e) { console.error("Error al borrar el juego: ", e); }
              }
 
-             currentGameId = null;
+             
              secretWordInput.value = '';
              joinGameIdInput.value = '';
              joinGameForm.classList.add('hidden');
-             gameOverMessage.classList.add('hidden');
-             keyboardContainer.classList.remove('hidden');
              showScreen('home');
         };
 
@@ -536,11 +557,9 @@
         startGameBtn.addEventListener('click', startGame);
         joinGameBtn.addEventListener('click', joinGame);
         newGameBtn.addEventListener('click', resetToHome);
-
         showJoinFormBtn.addEventListener('click', () => {
             joinGameForm.classList.toggle('hidden');
         });
-
         backButtons.forEach(btn => btn.addEventListener('click', resetToHome));
 
         // Iniciar la aplicación
@@ -549,3 +568,4 @@
     </script>
 </body>
 </html>
+
