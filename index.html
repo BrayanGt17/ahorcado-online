@@ -207,7 +207,7 @@
             tictactoeGame: document.getElementById('tictactoe-game-screen'), hangmanGame: document.getElementById('hangman-game-screen'),
         };
         
-        // --- FUNCIONES DE UTILIDAD Y NAVEGACIÓN ---
+        // --- DECLARACIÓN DE FUNCIONES ---
         
         const showScreen = (screenName) => {
             Object.values(screens).forEach(s => s.classList.add('hidden'));
@@ -224,7 +224,7 @@
             showScreen('lobby');
         };
 
-        async function resetToLobby() {
+        const resetToLobby = async () => {
             if (gameUnsubscribe) {
                 gameUnsubscribe();
                 gameUnsubscribe = null;
@@ -238,7 +238,7 @@
             }
             currentGameId = null;
             goToLobby(currentGameType);
-        }
+        };
 
         const copyToClipboard = (text, element) => {
             navigator.clipboard.writeText(text).then(() => {
@@ -248,9 +248,7 @@
             }).catch(err => console.error('Error al copiar: ', err));
         };
 
-        // --- LÓGICA PRINCIPAL DE PARTIDAS ---
-
-        async function createGame() {
+        const createGame = async () => {
             if (!currentUser || !currentGameType) return;
             const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
             currentGameId = gameId;
@@ -278,9 +276,9 @@
             
             await setDoc(doc(db, "games", gameId), gameData);
             listenToGameUpdates(gameId);
-        }
+        };
         
-        async function joinGame() {
+        const joinGame = async () => {
             if (!currentUser) return;
             const gameId = document.getElementById('join-game-id-input').value.trim().toUpperCase();
             if (!gameId) { alert("Ingresa un ID de juego."); return; }
@@ -290,7 +288,7 @@
             if (gameSnap.exists()) {
                 const gameData = gameSnap.data();
                 if (gameData.gameType !== currentGameType) { alert(`Ese ID es de una partida de ${gameData.gameType}.`); return; }
-                if ((gameData.status === 'waiting' || (gameData.gameType === 'hangman' && gameData.status === 'waiting_for_opponent')) && gameData.hostId !== currentUser.uid) {
+                if ((gameData.status === 'waiting' || gameData.status === 'waiting_for_opponent') && gameData.hostId !== currentUser.uid) {
                     let updates = { opponentId: currentUser.uid, status: 'playing' };
                     if (gameData.gameType === 'memory') updates.scores = { ...gameData.scores, [currentUser.uid]: 0 };
                     await updateDoc(gameRef, updates);
@@ -298,7 +296,7 @@
                 currentGameId = gameId;
                 listenToGameUpdates(gameId);
             } else { alert("Partida no encontrada."); }
-        }
+        };
 
         const listenToGameUpdates = (gameId) => {
             if (gameUnsubscribe) gameUnsubscribe();
@@ -313,7 +311,6 @@
             });
         };
         
-        // --- LÓGICA DE REVANCHA ---
         const requestRematch = async () => {
             if (!currentGameId || !currentUser) return;
             const gameRef = doc(db, "games", currentGameId);
@@ -335,7 +332,7 @@
 
         const resetHangmanGame = async (gameRef) => {
              await updateDoc(gameRef, { status: 'waiting_for_word', word: '', hint: '', guessedLetters: [], incorrectGuesses: 0, hintUsed: false, rematchRequests: [] });
-        }
+        };
         const resetTicTacToeGame = async (gameRef, gameData) => {
             await updateDoc(gameRef, { board: Array(9).fill(null), status: 'playing', turn: gameData.hostId, winner: null, winningLine: null, rematchRequests: [] });
         };
@@ -370,7 +367,7 @@
         }
 
         // --- LÓGICA DE AHORCADO ---
-        async function startHangmanGame() {
+        const startHangmanGame = async () => {
             const word = document.getElementById('secret-word-input').value.trim().toUpperCase();
             const hint = document.getElementById('secret-word-hint-input').value.trim();
             if (!word || !/^[A-ZÑ]+$/.test(word)) { alert("Palabra inválida."); return; }
@@ -381,9 +378,8 @@
             const gameData = gameSnap.data();
 
             const newStatus = gameData.opponentId ? 'playing' : 'waiting_for_opponent';
-            
             await updateDoc(gameRef, { word, hint, status: newStatus });
-        }
+        };
 
         function renderHangmanUI(game) {
             const isHost = currentUser.uid === game.hostId;
@@ -461,7 +457,7 @@
             }
         }
         
-        async function handleGuess(letter) {
+        const handleGuess = async (letter) => {
             const gameRef = doc(db, "games", currentGameId);
             const gameSnap = await getDoc(gameRef);
             if (!gameSnap.exists()) return;
@@ -471,18 +467,18 @@
                 guessedLetters: [...game.guessedLetters, letter],
                 incorrectGuesses: game.word.includes(letter) ? game.incorrectGuesses : game.incorrectGuesses + 1
             });
-        }
-        async function useHint() {
+        };
+        const useHint = async () => {
             const gameRef = doc(db, "games", currentGameId);
             const gameSnap = await getDoc(gameRef);
             if (!gameSnap.exists()) return;
             const game = gameSnap.data();
             if (game.hintUsed || game.opponentId !== currentUser.uid || game.status !== 'playing') return;
             await updateDoc(gameRef, { hintUsed: true, incorrectGuesses: game.incorrectGuesses + 1 });
-        }
+        };
 
         // --- LÓGICA DE GATO ---
-        function renderTicTacToeUI(game) {
+        const renderTicTacToeUI = (game) => {
             if (game.status === 'waiting') {
                 document.getElementById('waiting-game-id').textContent = currentGameId;
                 showScreen('waiting'); return;
@@ -524,8 +520,8 @@
                     rematchStatus: document.getElementById('tictactoe-rematch-status')
                 });
             }
-        }
-        async function handleCellClick(index, game) {
+        };
+        const handleCellClick = async (index, game) => {
             if (game.turn !== currentUser.uid || game.board[index] !== null) return;
             const gameRef = doc(db, "games", currentGameId);
             const playerSymbol = currentUser.uid === game.hostId ? game.hostSymbol : game.opponentSymbol;
@@ -540,7 +536,7 @@
                 winningLine = winResult.line;
             }
             await updateDoc(gameRef, { board: newBoard, turn: nextTurn, status: newStatus, winner, winningLine });
-        }
+        };
         const checkWinner = (board) => {
             const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
             for (let i = 0; i < lines.length; i++) {
@@ -552,7 +548,7 @@
         };
 
         // --- LÓGICA DE MEMORIA ---
-        function renderMemoryUI(game) {
+        const renderMemoryUI = (game) => {
             if (game.status === 'waiting') {
                 document.getElementById('waiting-game-id').textContent = currentGameId;
                 showScreen('waiting'); return;
@@ -597,8 +593,8 @@
                     rematchStatus: document.getElementById('memory-rematch-status')
                 });
             }
-        }
-        async function handleCardClick(index, game) {
+        };
+        const handleCardClick = async (index, game) => {
              if (game.flippedIndices.length >= 2 || game.board[index].isFlipped || game.turn !== currentUser.uid) return;
             const gameRef = doc(db, "games", currentGameId);
             const newFlippedIndices = [...game.flippedIndices, index];
@@ -623,7 +619,7 @@
             }
         };
         
-        // --- INICIALIZACIÓN ---
+        // --- INICIALIZACIÓN Y EVENT LISTENERS ---
         onAuthStateChanged(auth, (user) => {
             if (user) { currentUser = user; document.getElementById('player-id-display').textContent = user.uid.substring(0, 8); } 
             else { signInAnonymously(auth).catch(e => console.error(e)); }
@@ -637,6 +633,10 @@
         document.getElementById('join-game-btn').addEventListener('click', joinGame);
         document.getElementById('start-hangman-game-btn').addEventListener('click', startHangmanGame);
         document.getElementById('waiting-game-id').addEventListener('click', (e) => copyToClipboard(e.target.textContent, e.target));
+        document.getElementById('keyboard').addEventListener('click', e => {
+            if(e.target.matches('.keyboard-btn')) handleGuess(e.target.dataset.letter);
+        });
+        document.getElementById('show-hint-btn').addEventListener('click', useHint);
         
         showScreen('selection');
     </script>
