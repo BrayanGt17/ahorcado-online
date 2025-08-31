@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego del Ahorcado Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease-in-out;
+        }
+        .btn {
+            display: inline-block;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.75rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .btn-primary {
+            color: #fff;
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+            border-color: #3730a3;
+        }
+        .btn-secondary {
+            color: #4f46e5;
+            background-color: #e0e7ff;
+            border-color: #e0e7ff;
+        }
+        .btn-secondary:hover {
+            background-color: #c7d2fe;
+        }
+        .form-input {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #1f2937;
+            background-color: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+        }
+        .letter {
+            width: 3rem;
+            height: 3rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border-bottom: 3px solid #6b7280;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 0.25rem;
+            color: #111827;
+        }
+        .keyboard-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background-color: #e5e7eb;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+        }
+        .keyboard-btn:hover:not(:disabled) {
+            background-color: #d1d5db;
+        }
+        .keyboard-btn:disabled {
+            background-color: #9ca3af;
+            color: #e5e7eb;
+            cursor: not-allowed;
+        }
+        .keyboard-btn.correct {
+            background-color: #22c55e;
+            color: white;
+        }
+        .keyboard-btn.incorrect {
+            background-color: #ef4444;
+            color: white;
+        }
+        #hangman-svg g line {
+            stroke: #1f2937;
+            stroke-width: 4;
+            stroke-linecap: round;
+        }
+    </style>
+</head>
+<body class="bg-indigo-50 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="max-w-4xl w-full">
+
+        <!-- Pantalla de Inicio -->
+        <div id="home-screen" class="card text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Ahorcado Online</h1>
+            <p class="text-gray-600 mb-8">Juega con un amigo en tiempo real.</p>
+            <p class="text-sm text-gray-500 mb-4">Tu ID de Jugador: <strong id="player-id-display" class="text-indigo-600">Cargando...</strong></p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="create-game-btn" class="btn btn-primary w-full sm:w-auto">Crear Juego Nuevo</button>
+                <button id="show-join-form-btn" class="btn btn-secondary w-full sm:w-auto">Unirse a un Juego</button>
+            </div>
+            <div id="join-game-form" class="hidden mt-6 max-w-sm mx-auto">
+                <input type="text" id="join-game-id-input" class="form-input text-center" placeholder="Ingresa el ID del Juego">
+                <button id="join-game-btn" class="btn btn-primary w-full mt-3">Unirse</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Creación de Juego -->
+        <div id="create-game-screen" class="hidden card text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Crea una Partida</h2>
+            <p class="text-gray-600 mb-2">Comparte este ID con tu pareja para que se una:</p>
+            <div class="bg-indigo-100 text-indigo-800 text-2xl font-bold p-3 rounded-lg inline-block mb-6" id="game-id-display"></div>
+            <p class="text-gray-600 mb-4">Ahora, escribe la palabra secreta:</p>
+            <div class="max-w-sm mx-auto">
+                <input type="password" id="secret-word-input" class="form-input text-center uppercase" placeholder="PALABRA SECRETA">
+                <button id="start-game-btn" class="btn btn-primary w-full mt-3">Comenzar Juego</button>
+            </div>
+             <button id="back-to-home-from-create" class="text-indigo-600 hover:underline mt-6">Volver</button>
+        </div>
+
+        <!-- Pantalla de Juego -->
+        <div id="game-screen" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="card flex flex-col items-center justify-center">
+                    <h2 class="text-xl font-bold text-gray-700 mb-4">Ahorcado</h2>
+                     <svg id="hangman-svg" width="200" height="250" viewBox="0 0 200 250">
+                        <g id="gallow">
+                            <line x1="10" y1="240" x2="190" y2="240" /> <!-- Base -->
+                            <line x1="50" y1="240" x2="50" y2="20" /> <!-- Poste vertical -->
+                            <line x1="50" y1="20" x2="150" y2="20" /> <!-- Viga horizontal -->
+                            <line x1="150" y1="20" x2="150" y2="50" /> <!-- Cuerda -->
+                        </g>
+                        <g id="body-parts" class="hidden">
+                            <circle cx="150" cy="70" r="20" fill="transparent" stroke="#1f2937" stroke-width="4" /> <!-- Cabeza -->
+                            <line x1="150" y1="90" x2="150" y2="160" /> <!-- Cuerpo -->
+                            <line x1="150" y1="110" x2="120" y2="140" /> <!-- Brazo izquierdo -->
+                            <line x1="150" y1="110" x2="180" y2="140" /> <!-- Brazo derecho -->
+                            <line x1="150" y1="160" x2="120" y2="200" /> <!-- Pierna izquierda -->
+                            <line x1="150" y1="160" x2="180" y2="200" /> <!-- Pierna derecha -->
+                        </g>
+                    </svg>
+                     <p class="text-gray-500 mt-2">Intentos restantes: <span id="attempts-left" class="font-bold">6</span></p>
+                </div>
+                <div class="card">
+                    <p id="game-info" class="text-center text-gray-600 mb-6 h-10"></p>
+                    <div id="word-display" class="flex justify-center mb-8"></div>
+                    <div id="keyboard" class="grid grid-cols-7 gap-2"></div>
+                    <div id="game-over-message" class="hidden text-center mt-6">
+                        <h3 id="game-over-text" class="text-3xl font-bold"></h3>
+                        <p class="mt-2 text-gray-600">La palabra era: <strong id="correct-word" class="text-indigo-600"></strong></p>
+                        <button id="new-game-btn" class="btn btn-primary mt-4">Jugar de Nuevo</button>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                 <button id="back-to-home-from-game" class="text-indigo-600 hover:underline">Salir de la partida</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- IMPORTACIONES DE FIREBASE ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        // La configuración real de Firebase se inyectará aquí en un entorno de producción
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hangman-online-default';
+
+        // --- INICIALIZACIÓN DE FIREBASE ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- VARIABLES GLOBALES ---
+        let currentUser = null;
+        let currentGameId = null;
+        let gameUnsubscribe = null;
+        const MAX_ATTEMPTS = 6;
+        
+        const hangmanParts = [
+            '#body-parts circle',
+            '#body-parts line:nth-of-type(1)',
+            '#body-parts line:nth-of-type(2)',
+            '#body-parts line:nth-of-type(3)',
+            '#body-parts line:nth-of-type(4)',
+            '#body-parts line:nth-of-type(5)',
+        ];
+
+        // --- ELEMENTOS DEL DOM ---
+        const screens = {
+            home: document.getElementById('home-screen'),
+            create: document.getElementById('create-game-screen'),
+            game: document.getElementById('game-screen'),
+        };
+        const playerIdDisplay = document.getElementById('player-id-display');
+        const createGameBtn = document.getElementById('create-game-btn');
+        const showJoinFormBtn = document.getElementById('show-join-form-btn');
+        const joinGameForm = document.getElementById('join-game-form');
+        const joinGameIdInput = document.getElementById('join-game-id-input');
+        const joinGameBtn = document.getElementById('join-game-btn');
+        const gameIdDisplay = document.getElementById('game-id-display');
+        const secretWordInput = document.getElementById('secret-word-input');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const gameInfo = document.getElementById('game-info');
+        const wordDisplay = document.getElementById('word-display');
+        const keyboardContainer = document.getElementById('keyboard');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const gameOverText = document.getElementById('game-over-text');
+        const correctWordDisplay = document.getElementById('correct-word');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const attemptsLeftDisplay = document.getElementById('attempts-left');
+        const hangmanBodyParts = document.querySelector('#body-parts');
+
+        // Botones para volver
+        const backButtons = [
+            document.getElementById('back-to-home-from-create'),
+            document.getElementById('back-to-home-from-game'),
+        ];
+        
+        // --- LÓGICA DE NAVEGACIÓN ---
+        const showScreen = (screenName) => {
+            Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+            if (screens[screenName]) {
+                screens[screenName].classList.remove('hidden');
+            }
+        };
+
+        // --- LÓGICA DE AUTENTICACIÓN ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                playerIdDisplay.textContent = user.uid;
+            } else {
+                signInAnonymously(auth).catch(error => {
+                    console.error("Error al iniciar sesión anónimamente:", error);
+                    playerIdDisplay.textContent = "Error de conexión";
+                });
+            }
+        });
+
+        // --- LÓGICA DEL JUEGO ---
+
+        const createGame = async () => {
+            if (!currentUser) {
+                alert("Espera a que se establezca la conexión.");
+                return;
+            }
+            
+            const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            currentGameId = gameId;
+            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+            
+            await setDoc(gameRef, {
+                hostId: currentUser.uid,
+                guesserId: null,
+                word: '',
+                guessedLetters: [],
+                incorrectGuesses: 0,
+                status: 'waiting_for_word', // 'waiting_for_guesser', 'playing', 'won', 'lost'
+                turn: null,
+                createdAt: new Date(),
+            });
+
+            gameIdDisplay.textContent = gameId;
+            showScreen('create');
+            listenToGameUpdates(gameId);
+        };
+
+        const startGame = async () => {
+            const word = secretWordInput.value.trim().toUpperCase();
+            if (!word || !/^[A-ZÑ]+$/.test(word)) {
+                alert("Por favor, ingresa una palabra válida (solo letras, sin espacios ni números).");
+                return;
+            }
+
+            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+            await updateDoc(gameRef, {
+                word: word,
+                status: 'waiting_for_guesser'
+            });
+        };
+
+        const joinGame = async () => {
+            if (!currentUser) {
+                alert("Espera a que se establezca la conexión.");
+                return;
+            }
+
+            const gameId = joinGameIdInput.value.trim().toUpperCase();
+            if (!gameId) {
+                alert("Por favor, ingresa un ID de juego.");
+                return;
+            }
+
+            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+            const gameSnap = await getDoc(gameRef);
+
+            if (gameSnap.exists()) {
+                const gameData = gameSnap.data();
+                if (gameData.hostId === currentUser.uid) {
+                    // El host se está reconectando
+                } else if (!gameData.guesserId) {
+                    await updateDoc(gameRef, {
+                        guesserId: currentUser.uid,
+                        status: 'playing',
+                        turn: gameData.hostId, // Empieza el turno del que adivina (el que se une)
+                    });
+                } else if (gameData.guesserId !== currentUser.uid) {
+                    alert("Este juego ya está lleno.");
+                    return;
+                }
+                
+                currentGameId = gameId;
+                listenToGameUpdates(gameId);
+                showScreen('game');
+            } else {
+                alert("No se encontró ningún juego con ese ID.");
+            }
+        };
+
+        const listenToGameUpdates = (gameId) => {
+            if (gameUnsubscribe) {
+                gameUnsubscribe();
+            }
+            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+            gameUnsubscribe = onSnapshot(gameRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const gameData = docSnap.data();
+                    updateUI(gameData);
+                } else {
+                    alert("La partida ha terminado o ha sido eliminada.");
+                    resetToHome();
+                }
+            });
+        };
+
+        const updateUI = (game) => {
+            if (game.status === 'waiting_for_word') {
+                 showScreen('create');
+                 return;
+            }
+            
+            if (game.status === 'waiting_for_guesser' && currentUser.uid === game.hostId) {
+                showScreen('game');
+                gameInfo.textContent = 'Esperando a que tu pareja se una...';
+                wordDisplay.innerHTML = '';
+                keyboardContainer.innerHTML = '<p class="col-span-7 text-center text-gray-500">El teclado aparecerá cuando comience la partida.</p>';
+                return;
+            }
+            
+            if (['playing', 'won', 'lost'].includes(game.status)) {
+                 showScreen('game');
+            }
+            
+            renderWord(game.word, game.guessedLetters);
+            renderKeyboard(game.guessedLetters, game.word);
+            renderHangman(game.incorrectGuesses);
+            
+            attemptsLeftDisplay.textContent = MAX_ATTEMPTS - game.incorrectGuesses;
+
+            const isHost = currentUser.uid === game.hostId;
+            const isGuesser = currentUser.uid === game.guesserId;
+            const isMyTurn = isGuesser; // Solo el que adivina puede hacer clic en las letras
+
+            let infoText = '';
+            if (game.status === 'playing') {
+                 if (isGuesser) {
+                     infoText = '¡Es tu turno! Adivina una letra.';
+                 } else if(isHost) {
+                     infoText = 'Tu pareja está adivinando la palabra...';
+                 }
+            }
+            
+            gameInfo.textContent = infoText;
+            
+            // Lógica de fin de juego
+            const wordIsGuessed = game.word.split('').every(letter => game.guessedLetters.includes(letter));
+
+            if (wordIsGuessed && game.word.length > 0) {
+                updateGameStatus(game.status !== 'won' ? 'won' : null);
+            } else if (game.incorrectGuesses >= MAX_ATTEMPTS) {
+                updateGameStatus(game.status !== 'lost' ? 'lost' : null);
+            }
+
+            if (game.status === 'won') {
+                gameOverText.textContent = "¡Felicidades, has ganado!";
+                gameOverText.className = "text-3xl font-bold text-green-500";
+                correctWordDisplay.textContent = game.word;
+                gameOverMessage.classList.remove('hidden');
+                keyboardContainer.classList.add('hidden');
+            } else if (game.status === 'lost') {
+                gameOverText.textContent = "¡Oh no, has perdido!";
+                gameOverText.className = "text-3xl font-bold text-red-500";
+                correctWordDisplay.textContent = game.word;
+                gameOverMessage.classList.remove('hidden');
+                keyboardContainer.classList.add('hidden');
+            }
+        };
+        
+        const updateGameStatus = async (newStatus) => {
+            if (!newStatus || !currentGameId) return;
+             const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+             await updateDoc(gameRef, { status: newStatus });
+        }
+
+
+        const renderWord = (word, guessedLetters) => {
+            wordDisplay.innerHTML = '';
+            if (!word) return;
+            word.split('').forEach(letter => {
+                const letterDiv = document.createElement('div');
+                letterDiv.className = 'letter';
+                letterDiv.textContent = guessedLetters.includes(letter) ? letter : '';
+                wordDisplay.appendChild(letterDiv);
+            });
+        };
+
+        const renderKeyboard = (guessedLetters, word) => {
+            keyboardContainer.innerHTML = '';
+            const alphabet = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
+            const isGuesser = document.getElementById('game-info').textContent.includes('¡Es tu turno!');
+            const gameIsOver = gameOverMessage.classList.contains('hidden') === false;
+
+            alphabet.split('').forEach(letter => {
+                const button = document.createElement('button');
+                button.className = 'keyboard-btn';
+                button.textContent = letter;
+                button.dataset.letter = letter;
+                button.disabled = guessedLetters.includes(letter) || !isGuesser || gameIsOver;
+
+                if(guessedLetters.includes(letter)) {
+                    button.classList.add(word.includes(letter) ? 'correct' : 'incorrect');
+                }
+
+                button.addEventListener('click', () => handleGuess(letter));
+                keyboardContainer.appendChild(button);
+            });
+        };
+        
+        const renderHangman = (incorrectGuesses) => {
+             // Reset
+             hangmanBodyParts.classList.add('hidden');
+             hangmanParts.forEach(part => {
+                 const el = document.querySelector(part);
+                 if (el) el.style.visibility = 'hidden';
+             });
+
+             if (incorrectGuesses > 0) {
+                 hangmanBodyParts.classList.remove('hidden');
+                 for (let i = 0; i < incorrectGuesses; i++) {
+                     const el = document.querySelector(hangmanParts[i]);
+                     if (el) el.style.visibility = 'visible';
+                 }
+             }
+        };
+
+        const handleGuess = async (letter) => {
+            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+            const gameSnap = await getDoc(gameRef);
+
+            if (gameSnap.exists()) {
+                const gameData = gameSnap.data();
+                if (gameData.guessedLetters.includes(letter) || gameData.status !== 'playing') return;
+
+                const newGuessedLetters = [...gameData.guessedLetters, letter];
+                let newIncorrectGuesses = gameData.incorrectGuesses;
+
+                if (!gameData.word.includes(letter)) {
+                    newIncorrectGuesses++;
+                }
+
+                await updateDoc(gameRef, {
+                    guessedLetters: newGuessedLetters,
+                    incorrectGuesses: newIncorrectGuesses
+                });
+            }
+        };
+
+        const resetToHome = async () => {
+             if (gameUnsubscribe) {
+                 gameUnsubscribe();
+                 gameUnsubscribe = null;
+             }
+
+             // Limpiar el juego de la base de datos si eres el host
+             if(currentGameId) {
+                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
+                const gameSnap = await getDoc(gameRef);
+                if(gameSnap.exists() && gameSnap.data().hostId === currentUser.uid) {
+                    await deleteDoc(gameRef).catch(e => console.error("Error al borrar el juego: ", e));
+                }
+             }
+
+             currentGameId = null;
+             secretWordInput.value = '';
+             joinGameIdInput.value = '';
+             joinGameForm.classList.add('hidden');
+             gameOverMessage.classList.add('hidden');
+             keyboardContainer.classList.remove('hidden');
+             showScreen('home');
+        };
+
+        // --- MANEJADORES DE EVENTOS ---
+        createGameBtn.addEventListener('click', createGame);
+        startGameBtn.addEventListener('click', startGame);
+        joinGameBtn.addEventListener('click', joinGame);
+        newGameBtn.addEventListener('click', resetToHome);
+
+        showJoinFormBtn.addEventListener('click', () => {
+            joinGameForm.classList.toggle('hidden');
+        });
+
+        backButtons.forEach(btn => btn.addEventListener('click', resetToHome));
+
+        // Iniciar la aplicación
+        showScreen('home');
+
+    </script>
+</body>
+</html>
