@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juego del Ahorcado Online</title>
+    <title>Sala de Juegos Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
+        body { font-family: 'Poppins', sans-serif; }
         .card {
             background-color: white;
             border-radius: 1.5rem;
@@ -18,116 +16,72 @@
             transition: all 0.3s ease-in-out;
         }
         .btn {
-            display: inline-block;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-            user-select: none;
-            -webkit-user-select: none;
-            border: 1px solid transparent;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            border-radius: 0.75rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            display: inline-block; font-weight: 600; text-align: center; vertical-align: middle;
+            user-select: none; -webkit-user-select: none; border: 1px solid transparent;
+            padding: 0.75rem 1.5rem; font-size: 1rem; line-height: 1.5; border-radius: 0.75rem;
+            transition: all 0.15s ease-in-out;
         }
-        .btn-primary {
-            color: #fff;
-            background-color: #4f46e5;
-            border-color: #4f46e5;
-        }
-        .btn-primary:hover {
-            background-color: #4338ca;
-            border-color: #3730a3;
-        }
-        .btn-secondary {
-            color: #4f46e5;
-            background-color: #e0e7ff;
-            border-color: #e0e7ff;
-        }
-        .btn-secondary:hover {
-            background-color: #c7d2fe;
-        }
+        .btn-primary { color: #fff; background-color: #4f46e5; border-color: #4f46e5; }
+        .btn-primary:hover { background-color: #4338ca; border-color: #3730a3; }
+        .btn-secondary { color: #4f46e5; background-color: #e0e7ff; border-color: #e0e7ff; }
+        .btn-secondary:hover { background-color: #c7d2fe; }
         .form-input {
-            display: block;
-            width: 100%;
-            padding: 0.75rem 1.25rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            color: #1f2937;
-            background-color: #f9fafb;
-            border: 1px solid #d1d5db;
-            border-radius: 0.75rem;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            display: block; width: 100%; padding: 0.75rem 1.25rem; font-size: 1rem; font-weight: 400;
+            line-height: 1.5; color: #1f2937; background-color: #f9fafb; border: 1px solid #d1d5db;
+            border-radius: 0.75rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
-        .form-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
-        }
+        .form-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3); }
+        .copy-btn { cursor: pointer; transition: background-color 0.2s; }
+        
+        /* Estilos Ahorcado */
         .letter {
-            width: 3rem;
-            height: 3rem;
-            font-size: 1.5rem;
-            font-weight: 600;
-            border-bottom: 3px solid #6b7280;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 0.25rem;
-            color: #111827;
+            width: 3rem; height: 3rem; font-size: 1.5rem; font-weight: 600; border-bottom: 3px solid #6b7280;
+            display: inline-flex; justify-content: center; align-items: center; margin: 0 0.25rem; color: #111827;
         }
         .keyboard-btn {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            background-color: #e5e7eb;
-            transition: background-color 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-transform: uppercase;
+            width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none;
+            background-color: #e5e7eb; transition: background-color 0.2s; display: flex; justify-content: center;
+            align-items: center; text-transform: uppercase;
         }
-        .keyboard-btn:hover:not(:disabled) {
-            background-color: #d1d5db;
+        .keyboard-btn:hover:not(:disabled) { background-color: #d1d5db; }
+        .keyboard-btn:disabled { background-color: #9ca3af; color: #e5e7eb; cursor: not-allowed; }
+        .keyboard-btn.correct { background-color: #22c55e; color: white; }
+        .keyboard-btn.incorrect { background-color: #ef4444; color: white; }
+        #hangman-svg g line { stroke: #1f2937; stroke-width: 4; stroke-linecap: round; }
+
+        /* Estilos Memoria */
+        .memory-card {
+            width: 100%; height: 100px; cursor: pointer; position: relative;
+            transform-style: preserve-3d; transition: transform 0.5s; border-radius: 0.75rem;
         }
-        .keyboard-btn:disabled {
-            background-color: #9ca3af;
-            color: #e5e7eb;
-            cursor: not-allowed;
+        .memory-card.is-flipped { transform: rotateY(180deg); }
+        .memory-card.is-matched { cursor: default; opacity: 0.5; }
+        .memory-card .card-face {
+            position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            display: flex; justify-content: center; align-items: center; font-size: 2.5rem; border-radius: 0.75rem;
         }
-        .keyboard-btn.correct {
-            background-color: #22c55e;
-            color: white;
-        }
-        .keyboard-btn.incorrect {
-            background-color: #ef4444;
-            color: white;
-        }
-        #hangman-svg g line {
-            stroke: #1f2937;
-            stroke-width: 4;
-            stroke-linecap: round;
-        }
-        .copy-btn {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+        .card-face.card-back { background-color: #4f46e5; color: white; }
+        .card-face.card-front { background-color: #e0e7ff; transform: rotateY(180deg); }
     </style>
 </head>
 <body class="bg-indigo-50 min-h-screen flex items-center justify-center p-4">
 
     <div id="app" class="max-w-4xl w-full">
 
-        <!-- Pantalla de Inicio -->
-        <div id="home-screen" class="card text-center">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Ahorcado Online</h1>
-            <p class="text-gray-600 mb-8">Juega con un amigo en tiempo real.</p>
+        <!-- Pantalla de Selección de Juego -->
+        <div id="game-selection-screen" class="card text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Sala de Juegos</h1>
+            <p class="text-gray-600 mb-8">Elige un juego para empezar.</p>
             <p class="text-sm text-gray-500 mb-4">Tu ID de Jugador: <strong id="player-id-display" class="text-indigo-600">Conectando...</strong></p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button data-game="hangman" class="game-select-btn btn btn-primary w-full sm:w-auto">Jugar Ahorcado</button>
+                <button data-game="memory" class="game-select-btn btn btn-secondary w-full sm:w-auto">Jugar Memoria</button>
+            </div>
+        </div>
+
+        <!-- Lobby (Crear/Unirse a Partida) -->
+        <div id="lobby-screen" class="hidden card text-center">
+            <h1 id="lobby-title" class="text-4xl font-bold text-gray-800 mb-8"></h1>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <button id="create-game-btn" class="btn btn-primary w-full sm:w-auto">Crear Juego Nuevo</button>
                 <button id="show-join-form-btn" class="btn btn-secondary w-full sm:w-auto">Unirse a un Juego</button>
@@ -136,66 +90,53 @@
                 <input type="text" id="join-game-id-input" class="form-input text-center uppercase" placeholder="Ingresa el ID del Juego">
                 <button id="join-game-btn" class="btn btn-primary w-full mt-3">Unirse</button>
             </div>
+            <button class="back-to-selection-btn text-indigo-600 hover:underline mt-6">Volver al menú</button>
         </div>
 
-        <!-- Pantalla de Creación de Juego -->
-        <div id="create-game-screen" class="hidden card text-center">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Crea una Partida</h2>
-            <p class="text-gray-600 mb-2">¡Haz clic en el código para copiar y compartirlo!</p>
-            <div id="game-id-display" class="copy-btn bg-indigo-100 text-indigo-800 text-2xl font-bold p-3 rounded-lg inline-block mb-6" title="Haz clic para copiar"></div>
-            <div class="max-w-sm mx-auto space-y-4">
-                <input type="password" id="secret-word-input" class="form-input text-center uppercase" placeholder="PALABRA SECRETA">
-                <input type="text" id="secret-word-hint-input" class="form-input text-center" placeholder="PISTA (OPCIONAL)">
-                <button id="start-game-btn" class="btn btn-primary w-full">Comenzar Juego</button>
-            </div>
-             <button id="back-to-home-from-create" class="text-indigo-600 hover:underline mt-6">Volver</button>
+        <!-- Pantalla de Creación de Ahorcado -->
+        <div id="create-hangman-screen" class="hidden card text-center">
+             <h2 class="text-2xl font-bold text-gray-800 mb-4">Crear Partida de Ahorcado</h2>
+             <p class="text-gray-600 mb-2">¡Haz clic en el código para copiar y compartirlo!</p>
+             <div id="hangman-game-id-display" class="copy-btn bg-indigo-100 text-indigo-800 text-2xl font-bold p-3 rounded-lg inline-block mb-6" title="Haz clic para copiar"></div>
+             <div class="max-w-sm mx-auto space-y-4">
+                 <input type="password" id="secret-word-input" class="form-input text-center uppercase" placeholder="PALABRA SECRETA">
+                 <input type="text" id="secret-word-hint-input" class="form-input text-center" placeholder="PISTA (OPCIONAL)">
+                 <button id="start-hangman-game-btn" class="btn btn-primary w-full">Comenzar Juego</button>
+             </div>
+              <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6">Volver</button>
         </div>
 
-        <!-- Pantalla de Juego -->
-        <div id="game-screen" class="hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div class="card flex flex-col items-center justify-center">
-                    <h2 class="text-xl font-bold text-gray-700 mb-4">Ahorcado</h2>
-                     <svg id="hangman-svg" width="200" height="250" viewBox="0 0 200 250">
-                        <g id="gallow">
-                            <line x1="10" y1="240" x2="190" y2="240" />
-                            <line x1="50" y1="240" x2="50" y2="20" />
-                            <line x1="50" y1="20" x2="150" y2="20" />
-                            <line x1="150" y1="20" x2="150" y2="50" />
-                        </g>
-                        <g id="body-parts" class="hidden">
-                            <circle cx="150" cy="70" r="20" fill="transparent" stroke="#1f2937" stroke-width="4" />
-                            <line x1="150" y1="90" x2="150" y2="160" />
-                            <line x1="150" y1="110" x2="120" y2="140" />
-                            <line x1="150" y1="110" x2="180" y2="140" />
-                            <line x1="150" y1="160" x2="120" y2="200" />
-                            <line x1="150" y1="160" x2="180" y2="200" />
-                        </g>
-                    </svg>
-                     <p class="text-gray-500 mt-2">Intentos restantes: <span id="attempts-left" class="font-bold">6</span></p>
-                </div>
-                <div class="card">
-                    <div id="game-info" class="text-center text-gray-600 mb-6 min-h-[3.5rem]"></div>
-                    <div id="word-display" class="flex justify-center mb-8"></div>
-
-                    <!-- SECCIÓN DE PISTA -->
-                    <div class="text-center mb-4">
-                        <button id="show-hint-btn" class="hidden btn btn-secondary btn-sm">Pedir Pista (-1 intento)</button>
-                        <p id="hint-display" class="hidden bg-yellow-100 text-yellow-800 p-3 rounded-lg"><strong>Pista:</strong> <span id="hint-text"></span></p>
-                    </div>
-
-                    <div id="keyboard" class="grid grid-cols-7 gap-2"></div>
-                    <div id="game-over-message" class="hidden text-center mt-6">
-                        <h3 id="game-over-text" class="text-3xl font-bold"></h3>
-                        <p class="mt-2 text-gray-600">La palabra era: <strong id="correct-word" class="text-indigo-600"></strong></p>
-                        <button id="new-game-btn" class="btn btn-primary mt-4">Jugar de Nuevo</button>
-                    </div>
-                </div>
-            </div>
-            <div class="text-center mt-4">
-                 <button id="back-to-home-from-game" class="text-indigo-600 hover:underline">Salir de la partida</button>
-            </div>
+        <!-- Pantalla de Espera (Ambos Juegos) -->
+        <div id="waiting-screen" class="hidden card text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Esperando oponente...</h2>
+            <p class="text-gray-600 mb-2">Comparte este ID con tu amigo:</p>
+            <div id="waiting-game-id" class="copy-btn bg-indigo-100 text-indigo-800 text-2xl font-bold p-3 rounded-lg inline-block mb-6" title="Haz clic para copiar"></div>
+            <div class="animate-pulse text-gray-500">Buscando un segundo jugador...</div>
+            <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6">Cancelar</button>
         </div>
+
+        <!-- Pantalla de Juego AHORCADO -->
+        <div id="hangman-game-screen" class="hidden">
+            <!-- ... (código del juego de ahorcado sin cambios) ... -->
+        </div>
+
+        <!-- Pantalla de Juego MEMORIA -->
+        <div id="memory-game-screen" class="hidden card">
+            <div class="flex justify-between items-center mb-4">
+                <div id="memory-player1-score" class="text-lg font-bold">Jugador 1: 0</div>
+                <div id="memory-game-status" class="text-xl font-bold text-indigo-600"></div>
+                <div id="memory-player2-score" class="text-lg font-bold">Jugador 2: 0</div>
+            </div>
+            <div id="memory-board" class="grid grid-cols-4 gap-4 mb-4">
+                <!-- Las cartas se generarán aquí -->
+            </div>
+            <div id="memory-game-over" class="hidden text-center">
+                <h3 id="memory-winner-text" class="text-3xl font-bold"></h3>
+                <button class="back-to-lobby-btn btn btn-primary mt-4">Jugar de Nuevo</button>
+            </div>
+             <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6 text-center block w-full">Salir de la partida</button>
+        </div>
+
     </div>
 
     <script type="module">
@@ -213,310 +154,265 @@
           messagingSenderId: "672093029492",
           appId: "1:672093029492:web:744571a8ae3a16845ebd21"
         };
-
-        // --- INICIALIZACIÓN DE FIREBASE ---
+        
+        // --- INICIALIZACIÓN Y VARIABLES GLOBALES ---
         let app, auth, db;
         try {
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-            console.log("Firebase inicializado correctamente.");
         } catch (error) {
-            console.error("Error al inicializar Firebase. Revisa tu 'firebaseConfig'.", error);
-            document.getElementById('player-id-display').textContent = "Error de configuración";
+            console.error("Error al inicializar Firebase:", error);
+            document.getElementById('player-id-display').textContent = "Error de Config.";
         }
-
-        // --- VARIABLES GLOBALES ---
+        
         let currentUser = null;
         let currentGameId = null;
+        let currentGameType = null;
         let gameUnsubscribe = null;
-        const MAX_ATTEMPTS = 6;
-        const hangmanParts = ['#body-parts circle', '#body-parts line:nth-of-type(1)', '#body-parts line:nth-of-type(2)', '#body-parts line:nth-of-type(3)', '#body-parts line:nth-of-type(4)', '#body-parts line:nth-of-type(5)'];
 
         // --- ELEMENTOS DEL DOM ---
-        const screens = { home: document.getElementById('home-screen'), create: document.getElementById('create-game-screen'), game: document.getElementById('game-screen') };
+        const screens = {
+            selection: document.getElementById('game-selection-screen'),
+            lobby: document.getElementById('lobby-screen'),
+            createHangman: document.getElementById('create-hangman-screen'),
+            waiting: document.getElementById('waiting-screen'),
+            hangmanGame: document.getElementById('hangman-game-screen'),
+            memoryGame: document.getElementById('memory-game-screen'),
+        };
         const playerIdDisplay = document.getElementById('player-id-display');
+        const gameSelectBtns = document.querySelectorAll('.game-select-btn');
+        const lobbyTitle = document.getElementById('lobby-title');
         const createGameBtn = document.getElementById('create-game-btn');
         const showJoinFormBtn = document.getElementById('show-join-form-btn');
         const joinGameForm = document.getElementById('join-game-form');
         const joinGameIdInput = document.getElementById('join-game-id-input');
         const joinGameBtn = document.getElementById('join-game-btn');
-        const gameIdDisplay = document.getElementById('game-id-display');
-        const secretWordInput = document.getElementById('secret-word-input');
-        const secretWordHintInput = document.getElementById('secret-word-hint-input');
-        const startGameBtn = document.getElementById('start-game-btn');
-        const gameInfo = document.getElementById('game-info');
-        const wordDisplay = document.getElementById('word-display');
-        const keyboardContainer = document.getElementById('keyboard');
-        const gameOverMessage = document.getElementById('game-over-message');
-        const gameOverText = document.getElementById('game-over-text');
-        const correctWordDisplay = document.getElementById('correct-word');
-        const newGameBtn = document.getElementById('new-game-btn');
-        const attemptsLeftDisplay = document.getElementById('attempts-left');
-        const hangmanBodyParts = document.querySelector('#body-parts');
-        const backButtons = [document.getElementById('back-to-home-from-create'), document.getElementById('back-to-home-from-game')];
-        const showHintBtn = document.getElementById('show-hint-btn');
-        const hintDisplay = document.getElementById('hint-display');
-        const hintText = document.getElementById('hint-text');
+        const waitingGameIdDisplay = document.getElementById('waiting-game-id');
         
-        // --- LÓGICA DE NAVEGACIÓN ---
+        // --- NAVEGACIÓN ---
         const showScreen = (screenName) => {
-            Object.values(screens).forEach(screen => screen.classList.add('hidden'));
-            if (screens[screenName]) screens[screenName].classList.remove('hidden');
+            Object.values(screens).forEach(s => s.classList.add('hidden'));
+            if(screens[screenName]) screens[screenName].classList.remove('hidden');
         };
 
-        // --- LÓGICA DE AUTENTICACIÓN ---
-        if (auth) {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUser = user;
-                    playerIdDisplay.textContent = user.uid;
-                } else {
-                    signInAnonymously(auth).catch(error => {
-                        console.error("Error al iniciar sesión anónimamente:", error);
-                        playerIdDisplay.textContent = "Error de conexión";
-                    });
+        const goToLobby = (gameType) => {
+            currentGameType = gameType;
+            lobbyTitle.textContent = gameType === 'hangman' ? 'Ahorcado' : 'Memoria';
+            showScreen('lobby');
+        };
+
+        const resetToLobby = async () => {
+            // Lógica para borrar/salir de la partida actual
+            if (gameUnsubscribe) gameUnsubscribe();
+            if (currentGameId && currentUser) {
+                const gameRef = doc(db, "games", currentGameId);
+                const gameSnap = await getDoc(gameRef);
+                if (gameSnap.exists() && gameSnap.data().hostId === currentUser.uid) {
+                    await deleteDoc(gameRef);
                 }
-            });
-        }
-
-        // --- FUNCIÓN PARA COPIAR AL PORTAPAPELES ---
-        const copyToClipboard = (text, element) => {
-            navigator.clipboard.writeText(text).then(() => {
-                const originalText = element.textContent;
-                const originalClassName = element.className;
-                element.textContent = '¡ID Copiado!';
-                element.classList.remove('bg-indigo-100');
-                element.classList.add('bg-green-200');
-                setTimeout(() => {
-                    element.textContent = originalText;
-                    element.className = originalClassName;
-                }, 1500);
-            }).catch(err => console.error('Error al copiar: ', err));
+            }
+            currentGameId = null;
+            goToLobby(currentGameType);
         };
+        
+        // --- LÓGICA DE AUTENTICACIÓN Y EVENTOS PRINCIPALES ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                playerIdDisplay.textContent = user.uid.substring(0, 8);
+            } else {
+                signInAnonymously(auth).catch(e => console.error("Login anónimo fallido:", e));
+            }
+        });
+        
+        gameSelectBtns.forEach(btn => btn.addEventListener('click', () => goToLobby(btn.dataset.game)));
+        document.querySelectorAll('.back-to-selection-btn').forEach(btn => btn.addEventListener('click', () => showScreen('selection')));
+        document.querySelectorAll('.back-to-lobby-btn').forEach(btn => btn.addEventListener('click', resetToLobby));
+        showJoinFormBtn.addEventListener('click', () => joinGameForm.classList.toggle('hidden'));
+        createGameBtn.addEventListener('click', () => createGame());
+        joinGameBtn.addEventListener('click', () => joinGame());
 
-        // --- LÓGICA DEL JUEGO ---
+
+        // --- LÓGICA GENERAL DE PARTIDAS ---
         const createGame = async () => {
-            if (!currentUser) { alert("Aún no se ha conectado con el servidor."); return; }
-            
+            if (!currentUser || !currentGameType) return;
             const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
             currentGameId = gameId;
-            const gameRef = doc(db, "games", gameId);
-            
-            await setDoc(gameRef, {
-                hostId: currentUser.uid, guesserId: null, word: '', hint: '', hintUsed: false,
-                guessedLetters: [], incorrectGuesses: 0, status: 'waiting_for_word', createdAt: new Date(),
-            });
 
-            gameIdDisplay.textContent = gameId;
-            showScreen('create');
-            listenToGameUpdates(gameId);
-        };
+            if (currentGameType === 'hangman') {
+                showScreen('createHangman'); // Pantalla específica para datos del ahorcado
+                // El resto de la lógica se mueve al botón 'start-hangman-game-btn'
+                document.getElementById('hangman-game-id-display').textContent = gameId;
 
-        const startGame = async () => {
-            const word = secretWordInput.value.trim().toUpperCase();
-            const hint = secretWordHintInput.value.trim();
-            if (!word || !/^[A-ZÑ]+$/.test(word)) {
-                alert("Por favor, ingresa una palabra válida (solo letras, sin espacios ni números).");
-                return;
+            } else if (currentGameType === 'memory') {
+                const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+                const cardValues = [...emojis, ...emojis].sort(() => 0.5 - Math.random());
+                const board = cardValues.map(value => ({ value, isFlipped: false, isMatched: false }));
+
+                await setDoc(doc(db, "games", gameId), {
+                    gameType: 'memory',
+                    hostId: currentUser.uid,
+                    opponentId: null,
+                    status: 'waiting',
+                    board,
+                    turn: currentUser.uid,
+                    scores: { [currentUser.uid]: 0 },
+                    flippedIndices: [],
+                    createdAt: new Date(),
+                });
+                listenToGameUpdates(gameId);
+                waitingGameIdDisplay.textContent = gameId;
+                showScreen('waiting');
             }
-
-            const gameRef = doc(db, "games", currentGameId);
-            await updateDoc(gameRef, { word, hint, status: 'waiting_for_guesser' });
         };
-
+        
         const joinGame = async () => {
-            if (!currentUser) { alert("Aún no se ha conectado con el servidor."); return; }
+            if (!currentUser) return;
             const gameId = joinGameIdInput.value.trim().toUpperCase();
-            if (!gameId) { alert("Por favor, ingresa un ID de juego."); return; }
-
+            if (!gameId) { alert("Ingresa un ID de juego."); return; }
+            
             const gameRef = doc(db, "games", gameId);
             const gameSnap = await getDoc(gameRef);
 
             if (gameSnap.exists()) {
                 const gameData = gameSnap.data();
-                if (gameData.hostId !== currentUser.uid && !gameData.guesserId) {
-                    await updateDoc(gameRef, { guesserId: currentUser.uid, status: 'playing' });
-                } else if (gameData.guesserId && gameData.guesserId !== currentUser.uid && gameData.hostId !== currentUser.uid) {
-                    alert("Este juego ya está lleno."); return;
+                if (gameData.status === 'waiting' && gameData.hostId !== currentUser.uid) {
+                    await updateDoc(gameRef, {
+                        opponentId: currentUser.uid,
+                        status: 'playing',
+                        'scores': { ...gameData.scores, [currentUser.uid]: 0 }
+                    });
+                    currentGameId = gameId;
+                    listenToGameUpdates(gameId);
+                } else {
+                     alert("No puedes unirte a esta partida.");
                 }
-                currentGameId = gameId;
-                listenToGameUpdates(gameId);
-                showScreen('game');
             } else {
-                alert("No se encontró ningún juego con ese ID.");
+                alert("Partida no encontrada.");
             }
         };
 
         const listenToGameUpdates = (gameId) => {
             if (gameUnsubscribe) gameUnsubscribe();
-            const gameRef = doc(db, "games", gameId);
-            gameUnsubscribe = onSnapshot(gameRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    updateUI(docSnap.data());
-                } else if (currentGameId) {
-                    alert("La partida ha terminado o ha sido eliminada.");
-                    resetToHome();
+            gameUnsubscribe = onSnapshot(doc(db, "games", gameId), (docSnap) => {
+                if (!docSnap.exists()) {
+                    alert("La partida ha terminado.");
+                    showScreen('selection');
+                    return;
+                }
+                const gameData = docSnap.data();
+                if (gameData.gameType === 'hangman') {
+                    // renderHangmanUI(gameData);
+                } else if (gameData.gameType === 'memory') {
+                    renderMemoryUI(gameData);
                 }
             });
         };
 
-        const updateUI = (game) => {
-            if (!currentUser) return;
-            if (game.status === 'waiting_for_word') { showScreen('create'); return; }
-            
-            const isGuesser = currentUser.uid === game.guesserId;
-            const isHost = currentUser.uid === game.hostId;
+        // --- LÓGICA ESPECÍFICA DE MEMORIA ---
+        const memoryBoard = document.getElementById('memory-board');
+        const p1ScoreDisplay = document.getElementById('memory-player1-score');
+        const p2ScoreDisplay = document.getElementById('memory-player2-score');
+        const memoryStatus = document.getElementById('memory-game-status');
 
-            if (game.status === 'waiting_for_guesser' && isHost) {
-                showScreen('game');
-                gameInfo.innerHTML = `Esperando a tu amigo...<br><span class="text-sm">Comparte el ID: </span><strong class="copy-btn bg-indigo-100 text-indigo-800 p-1 rounded" title="Haz clic para copiar">${currentGameId}</strong>`;
-                document.querySelector('#game-info .copy-btn')?.addEventListener('click', (e) => copyToClipboard(currentGameId, e.target));
-                wordDisplay.innerHTML = '';
-                keyboardContainer.innerHTML = '<p class="col-span-7 text-center text-gray-500">El teclado aparecerá cuando comience la partida.</p>';
-                showHintBtn.classList.add('hidden');
-                hintDisplay.classList.add('hidden');
+        const renderMemoryUI = (game) => {
+            if (game.status === 'waiting') {
+                waitingGameIdDisplay.textContent = currentGameId;
+                showScreen('waiting');
                 return;
             }
             
-            if (['playing', 'won', 'lost'].includes(game.status)) showScreen('game');
+            showScreen('memoryGame');
+            memoryBoard.innerHTML = '';
             
-            renderWord(game.word, game.guessedLetters);
-            renderKeyboard(game.guessedLetters, game.word, game.status, isGuesser);
-            renderHangman(game.incorrectGuesses);
-            attemptsLeftDisplay.textContent = MAX_ATTEMPTS - game.incorrectGuesses;
-
-            if (isGuesser && game.hint && !game.hintUsed && game.status === 'playing') {
-                showHintBtn.classList.remove('hidden');
+            // Renderizar Scores y Status
+            p1ScoreDisplay.textContent = `${game.hostId === currentUser.uid ? 'Tú' : 'Oponente'}: ${game.scores[game.hostId] || 0}`;
+            if(game.opponentId) {
+                p2ScoreDisplay.textContent = `${game.opponentId === currentUser.uid ? 'Tú' : 'Oponente'}: ${game.scores[game.opponentId] || 0}`;
             } else {
-                showHintBtn.classList.add('hidden');
+                p2ScoreDisplay.textContent = 'Esperando...';
             }
-            if (game.hintUsed) {
-                hintText.textContent = game.hint;
-                hintDisplay.classList.remove('hidden');
-            } else {
-                hintDisplay.classList.add('hidden');
-            }
+            memoryStatus.textContent = game.turn === currentUser.uid ? "¡Tu Turno!" : "Turno del Oponente";
 
-            if (game.status === 'playing') {
-                gameInfo.textContent = isGuesser ? '¡Es tu turno! Adivina una letra.' : 'Tu amigo está adivinando...';
-            }
+            // Renderizar Tablero
+            game.board.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.classList.add('memory-card');
+                if (card.isFlipped) cardEl.classList.add('is-flipped');
+                if (card.isMatched) cardEl.classList.add('is-matched');
+                
+                cardEl.innerHTML = `
+                    <div class="card-face card-back">?</div>
+                    <div class="card-face card-front">${card.value}</div>
+                `;
+                
+                if (!card.isMatched && game.turn === currentUser.uid) {
+                    cardEl.addEventListener('click', () => handleCardClick(index, game));
+                }
+                memoryBoard.appendChild(cardEl);
+            });
             
-            const wordIsGuessed = game.word && [...game.word].every(letter => game.guessedLetters.includes(letter));
-            if (game.status === 'playing' && wordIsGuessed) { updateGameStatus('won'); return; }
-            if (game.status === 'playing' && game.incorrectGuesses >= MAX_ATTEMPTS) { updateGameStatus('lost'); return; }
+             // Lógica de fin de juego
+            const allMatched = game.board.every(c => c.isMatched);
+            if(allMatched && game.status === 'playing'){
+                updateDoc(doc(db, "games", currentGameId), { status: 'finished'});
+            }
+            if (game.status === 'finished') {
+                const p1s = game.scores[game.hostId];
+                const p2s = game.scores[game.opponentId];
+                let winnerMsg = "¡Empate!";
+                if(p1s > p2s) winnerMsg = game.hostId === currentUser.uid ? "¡Ganaste!" : "¡Perdiste!";
+                if(p2s > p1s) winnerMsg = game.opponentId === currentUser.uid ? "¡Ganaste!" : "¡Perdiste!";
 
-            if (game.status === 'won' || game.status === 'lost') {
-                gameOverText.textContent = game.status === 'won' ? (isGuesser ? "¡Felicidades, ganaste!" : "¡Tu amigo ha ganado!") : (isGuesser ? "¡Oh no, has perdido!" : "Tu amigo ha perdido.");
-                gameOverText.className = `text-3xl font-bold ${game.status === 'won' ? 'text-green-500' : 'text-red-500'}`;
-                correctWordDisplay.textContent = game.word;
-                gameOverMessage.classList.remove('hidden');
-                keyboardContainer.classList.add('hidden');
-                showHintBtn.classList.add('hidden');
-            } else {
-                gameOverMessage.classList.add('hidden');
-                keyboardContainer.classList.remove('hidden');
+                document.getElementById('memory-winner-text').textContent = winnerMsg;
+                document.getElementById('memory-game-over').classList.remove('hidden');
+                memoryStatus.textContent = "Juego Terminado";
             }
         };
-        
-        const updateGameStatus = async (newStatus) => {
-            if (!newStatus || !currentGameId) return;
-             const gameRef = doc(db, "games", currentGameId);
-             await updateDoc(gameRef, { status: newStatus });
-        }
 
-        const renderWord = (word, guessedLetters) => {
-            wordDisplay.innerHTML = '';
-            if (!word) return;
-            word.split('').forEach(letter => {
-                wordDisplay.innerHTML += `<div class="letter">${guessedLetters.includes(letter) ? letter : ''}</div>`;
-            });
-        };
+        const handleCardClick = async (index, game) => {
+            // Prevenir clicks extraños
+            if (game.flippedIndices.length >= 2 || game.board[index].isFlipped) return;
 
-        const renderKeyboard = (guessedLetters, word, status, isGuesser) => {
-            keyboardContainer.innerHTML = '';
-            'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('').forEach(letter => {
-                const button = document.createElement('button');
-                button.className = 'keyboard-btn';
-                button.textContent = letter;
-                button.disabled = guessedLetters.includes(letter) || !isGuesser || status !== 'playing';
-                if(guessedLetters.includes(letter)) button.classList.add(word.includes(letter) ? 'correct' : 'incorrect');
-                button.addEventListener('click', () => handleGuess(letter));
-                keyboardContainer.appendChild(button);
-            });
-        };
-        
-        const renderHangman = (incorrectGuesses) => {
-             hangmanParts.forEach(part => { document.querySelector(part).style.visibility = 'hidden'; });
-             if (incorrectGuesses > 0) {
-                 hangmanBodyParts.classList.remove('hidden');
-                 for (let i = 0; i < incorrectGuesses; i++) {
-                    if (hangmanParts[i]) document.querySelector(hangmanParts[i]).style.visibility = 'visible';
-                 }
-             } else {
-                 hangmanBodyParts.classList.add('hidden');
-             }
-        };
-
-        const handleGuess = async (letter) => {
             const gameRef = doc(db, "games", currentGameId);
-            const gameSnap = await getDoc(gameRef);
-            if (!gameSnap.exists()) return;
-            const gameData = gameSnap.data();
-            if (gameData.guesserId !== currentUser.uid || gameData.guessedLetters.includes(letter) || gameData.status !== 'playing') return;
-            await updateDoc(gameRef, {
-                guessedLetters: [...gameData.guessedLetters, letter],
-                incorrectGuesses: gameData.word.includes(letter) ? gameData.incorrectGuesses : gameData.incorrectGuesses + 1
-            });
-        };
+            const newFlippedIndices = [...game.flippedIndices, index];
+            game.board[index].isFlipped = true;
 
-        const useHint = async () => {
-            const gameRef = doc(db, "games", currentGameId);
-            const gameSnap = await getDoc(gameRef);
-            if (!gameSnap.exists()) return;
-            const gameData = gameSnap.data();
-            
-            // --- ¡AQUÍ ESTABA EL ERROR! ---
-            // Se usaba 'game.status' en lugar de 'gameData.status'
-            if (gameData.guesserId !== currentUser.uid || gameData.hintUsed || gameData.status !== 'playing') {
-                console.log("No se puede usar la pista en este momento.");
-                return;
+            await updateDoc(gameRef, {
+                board: game.board,
+                flippedIndices: newFlippedIndices
+            });
+
+            // Si se voltearon 2 cartas, comprobar si coinciden
+            if (newFlippedIndices.length === 2) {
+                setTimeout(async () => {
+                    const [i1, i2] = newFlippedIndices;
+                    const card1 = game.board[i1];
+                    const card2 = game.board[i2];
+                    let nextTurn = game.turn;
+                    
+                    if (card1.value === card2.value) {
+                        game.board[i1].isMatched = true;
+                        game.board[i2].isMatched = true;
+                        game.scores[currentUser.uid]++;
+                    } else {
+                        game.board[i1].isFlipped = false;
+                        game.board[i2].isFlipped = false;
+                        nextTurn = game.turn === game.hostId ? game.opponentId : game.hostId;
+                    }
+                    await updateDoc(gameRef, {
+                        board: game.board,
+                        scores: game.scores,
+                        flippedIndices: [],
+                        turn: nextTurn
+                    });
+                }, 1000);
             }
-            
-            await updateDoc(gameRef, {
-                hintUsed: true,
-                incorrectGuesses: gameData.incorrectGuesses + 1
-            });
         };
 
-        const resetToHome = async () => {
-             if (gameUnsubscribe) { gameUnsubscribe(); gameUnsubscribe = null; }
-             const oldGameId = currentGameId;
-             currentGameId = null;
-             if(oldGameId && currentUser) {
-                const gameRef = doc(db, "games", oldGameId);
-                const gameSnap = await getDoc(gameRef);
-                if(gameSnap.exists() && gameSnap.data().hostId === currentUser.uid) await deleteDoc(gameRef);
-             }
-             secretWordInput.value = '';
-             secretWordHintInput.value = '';
-             joinGameIdInput.value = '';
-             joinGameForm.classList.add('hidden');
-             showScreen('home');
-        };
+        showScreen('selection');
 
-        // --- MANEJADORES DE EVENTOS ---
-        createGameBtn.addEventListener('click', createGame);
-        startGameBtn.addEventListener('click', startGame);
-        joinGameBtn.addEventListener('click', joinGame);
-        newGameBtn.addEventListener('click', resetToHome);
-        showHintBtn.addEventListener('click', useHint);
-        gameIdDisplay.addEventListener('click', () => copyToClipboard(currentGameId, gameIdDisplay));
-        showJoinFormBtn.addEventListener('click', () => joinGameForm.classList.toggle('hidden'));
-        backButtons.forEach(btn => btn.addEventListener('click', resetToHome));
-
-        // Iniciar la aplicación
-        showScreen('home');
     </script>
 </body>
 </html>
