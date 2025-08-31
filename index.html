@@ -224,7 +224,41 @@
             showScreen('waiting');
         };
         
-        const joinGame = async () => { /* ... (sin cambios) ... */ };
+        const joinGame = async () => {
+            if (!currentUser) { alert("Aún no te has conectado al servidor."); return; }
+            const gameId = document.getElementById('join-game-id-input').value.trim().toUpperCase();
+            if (!gameId) { alert("Por favor, ingresa un ID de juego."); return; }
+
+            const gameRef = doc(db, "games", gameId);
+            const gameSnap = await getDoc(gameRef);
+
+            if (gameSnap.exists()) {
+                const gameData = gameSnap.data();
+
+                if (gameData.gameType !== currentGameType) {
+                    alert(`Ese ID es para una partida de otro juego. Por favor, selecciona el juego correcto en el menú principal.`);
+                    return;
+                }
+
+                if (gameData.status === 'waiting' && gameData.hostId !== currentUser.uid) {
+                    let updates = { opponentId: currentUser.uid, status: 'playing' };
+                    if (gameData.gameType === 'memory') {
+                        updates['scores'] = { ...gameData.scores, [currentUser.uid]: 0 };
+                    }
+                    await updateDoc(gameRef, updates);
+                    currentGameId = gameId;
+                    listenToGameUpdates(gameId);
+                } else if (gameData.hostId === currentUser.uid || gameData.opponentId === currentUser.uid) {
+                     // Player is rejoining their own game
+                     currentGameId = gameId;
+                     listenToGameUpdates(gameId);
+                } else {
+                     alert("No puedes unirte a esta partida. Ya está llena.");
+                }
+            } else {
+                alert("No se encontró ninguna partida con ese ID.");
+            }
+        };
 
         const listenToGameUpdates = (gameId) => {
             if (gameUnsubscribe) gameUnsubscribe();
@@ -243,7 +277,11 @@
         const tttSymbol = document.getElementById('tictactoe-player-symbol');
 
         const renderTicTacToeUI = (game) => {
-            if (game.status === 'waiting') { showScreen('waiting'); return; }
+            if (game.status === 'waiting') { 
+                document.getElementById('waiting-game-id').textContent = currentGameId;
+                showScreen('waiting'); 
+                return; 
+            }
             showScreen('tictactoeGame');
             tttBoard.innerHTML = '';
 
@@ -269,10 +307,11 @@
 
             if (game.status === 'playing') {
                 tttStatus.textContent = game.turn === currentUser.uid ? "¡Tu Turno!" : "Turno del Oponente";
-            } else {
+            } else if (game.status === 'finished') {
                 const winnerText = document.getElementById('tictactoe-winner-text');
-                if (game.winner === 'draw') winnerText.textContent = "¡Es un Empate!";
-                else {
+                if (game.winner === 'draw') {
+                    winnerText.textContent = "¡Es un Empate!";
+                } else {
                     const winnerSymbol = game.board[game.winningLine[0]];
                     winnerText.textContent = (playerSymbol === winnerSymbol) ? "¡Felicidades, Ganaste!" : "¡Perdiste!";
                 }
@@ -282,6 +321,7 @@
         };
         
         const handleCellClick = async (index, game) => {
+            if (game.turn !== currentUser.uid || game.board[index] !== null) return;
             const gameRef = doc(db, "games", currentGameId);
             const playerSymbol = currentUser.uid === game.hostId ? game.hostSymbol : game.opponentSymbol;
             
@@ -290,9 +330,7 @@
             const nextTurn = currentUser.uid === game.hostId ? game.opponentId : game.hostId;
 
             const winResult = checkWinner(newBoard);
-            let newStatus = 'playing';
-            let winner = null;
-            let winningLine = null;
+            let newStatus = 'playing', winner = null, winningLine = null;
 
             if (winResult) {
                 newStatus = 'finished';
@@ -300,20 +338,11 @@
                 winningLine = winResult.line;
             }
 
-            await updateDoc(gameRef, {
-                board: newBoard,
-                turn: nextTurn,
-                status: newStatus,
-                winner: winner,
-                winningLine: winningLine
-            });
+            await updateDoc(gameRef, { board: newBoard, turn: nextTurn, status: newStatus, winner, winningLine });
         };
         
         const checkWinner = (board) => {
-            const lines = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], 
-                [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]
-            ];
+            const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
             for (let i = 0; i < lines.length; i++) {
                 const [a, b, c] = lines[i];
                 if (board[a] && board[a] === board[b] && board[a] === board[c]) {
@@ -324,7 +353,7 @@
             return null;
         };
         
-        // --- LÓGICA DE MEMORIA --- (sin cambios)
+        // --- LÓGICA DE MEMORIA --- (sin cambios, omitido por brevedad)
         const renderMemoryUI = (game) => { /* ... */ };
         
         showScreen('selection');
