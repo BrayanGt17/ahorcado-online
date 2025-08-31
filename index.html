@@ -207,7 +207,7 @@
             tictactoeGame: document.getElementById('tictactoe-game-screen'), hangmanGame: document.getElementById('hangman-game-screen'),
         };
         
-        // --- FUNCIONES ---
+        // --- FUNCIONES DE UTILIDAD Y NAVEGACIÓN ---
         
         const showScreen = (screenName) => {
             Object.values(screens).forEach(s => s.classList.add('hidden'));
@@ -240,15 +240,23 @@
             goToLobby(currentGameType);
         }
 
+        const copyToClipboard = (text, element) => {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = element.textContent;
+                element.textContent = '¡Copiado!';
+                setTimeout(() => { element.textContent = originalText; }, 1500);
+            }).catch(err => console.error('Error al copiar: ', err));
+        };
+
+        // --- LÓGICA PRINCIPAL DE PARTIDAS ---
+
         async function createGame() {
             if (!currentUser || !currentGameType) return;
-            
             const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
             currentGameId = gameId;
             let gameData;
 
             if (currentGameType === 'hangman') {
-                // Para Ahorcado, primero creamos el juego en un estado "esperando palabra"
                  gameData = {
                     gameType: 'hangman', hostId: currentUser.uid, opponentId: null,
                     status: 'waiting_for_word', word: '', hint: '', guessedLetters: [], 
@@ -256,7 +264,7 @@
                 };
                 await setDoc(doc(db, "games", gameId), gameData);
                 listenToGameUpdates(gameId);
-                return; // La UI se actualizará a la pantalla de creación
+                return;
             }
 
             if (currentGameType === 'tictactoe') {
@@ -282,7 +290,7 @@
             if (gameSnap.exists()) {
                 const gameData = gameSnap.data();
                 if (gameData.gameType !== currentGameType) { alert(`Ese ID es de una partida de ${gameData.gameType}.`); return; }
-                if (gameData.status === 'waiting' && gameData.hostId !== currentUser.uid) {
+                if ((gameData.status === 'waiting' || (gameData.gameType === 'hangman' && gameData.status === 'waiting_for_opponent')) && gameData.hostId !== currentUser.uid) {
                     let updates = { opponentId: currentUser.uid, status: 'playing' };
                     if (gameData.gameType === 'memory') updates.scores = { ...gameData.scores, [currentUser.uid]: 0 };
                     await updateDoc(gameRef, updates);
@@ -305,7 +313,7 @@
             });
         };
         
-        // --- LÓGICA DE REVANCHA (REMATCH) ---
+        // --- LÓGICA DE REVANCHA ---
         const requestRematch = async () => {
             if (!currentGameId || !currentUser) return;
             const gameRef = doc(db, "games", currentGameId);
@@ -326,10 +334,7 @@
         };
 
         const resetHangmanGame = async (gameRef) => {
-             await updateDoc(gameRef, {
-                status: 'waiting_for_word', word: '', hint: '', guessedLetters: [],
-                incorrectGuesses: 0, hintUsed: false, rematchRequests: []
-            });
+             await updateDoc(gameRef, { status: 'waiting_for_word', word: '', hint: '', guessedLetters: [], incorrectGuesses: 0, hintUsed: false, rematchRequests: [] });
         }
         const resetTicTacToeGame = async (gameRef, gameData) => {
             await updateDoc(gameRef, { board: Array(9).fill(null), status: 'playing', turn: gameData.hostId, winner: null, winningLine: null, rematchRequests: [] });
@@ -370,13 +375,14 @@
             const hint = document.getElementById('secret-word-hint-input').value.trim();
             if (!word || !/^[A-ZÑ]+$/.test(word)) { alert("Palabra inválida."); return; }
             
-            // En lugar de crear un juego nuevo, actualizamos el existente
             const gameRef = doc(db, "games", currentGameId);
-            await updateDoc(gameRef, {
-                word,
-                hint,
-                status: 'waiting', // Cambia a esperando para que el oponente se una formalmente
-            });
+            const gameSnap = await getDoc(gameRef);
+            if (!gameSnap.exists()) return;
+            const gameData = gameSnap.data();
+
+            const newStatus = gameData.opponentId ? 'playing' : 'waiting_for_opponent';
+            
+            await updateDoc(gameRef, { word, hint, status: newStatus });
         }
 
         function renderHangmanUI(game) {
@@ -385,21 +391,19 @@
             
             if (game.status === 'waiting_for_word') {
                 if (isHost) {
-                    document.getElementById('secret-word-input').value = '';
-                    document.getElementById('secret-word-hint-input').value = '';
                     showScreen('createHangman');
                 } else {
-                    // El oponente ve la pantalla del juego con un mensaje de espera
                     showScreen('hangmanGame');
                     document.getElementById('hangman-game-info').textContent = "El anfitrión está eligiendo una nueva palabra...";
                     document.getElementById('word-display').innerHTML = '';
-                    document.getElementById('keyboard').innerHTML = '';
+                    document.getElementById('keyboard').style.display = 'none';
                     document.getElementById('hangman-game-over').classList.add('hidden');
+                    document.getElementById('show-hint-btn').classList.add('hidden');
                 }
                 return;
             }
 
-            if (game.status === 'waiting') {
+            if (game.status === 'waiting_for_opponent') {
                 document.getElementById('waiting-game-id').textContent = currentGameId;
                 showScreen('waiting');
                 return;
@@ -457,18 +461,12 @@
             }
         }
         
-        document.getElementById('keyboard').addEventListener('click', e => {
-            if(e.target.matches('.keyboard-btn')) handleGuess(e.target.dataset.letter);
-        });
-        document.getElementById('show-hint-btn').addEventListener('click', useHint);
-
         async function handleGuess(letter) {
             const gameRef = doc(db, "games", currentGameId);
             const gameSnap = await getDoc(gameRef);
             if (!gameSnap.exists()) return;
             const game = gameSnap.data();
             if (game.opponentId !== currentUser.uid || game.guessedLetters.includes(letter) || game.status !== 'playing') return;
-            
             await updateDoc(gameRef, {
                 guessedLetters: [...game.guessedLetters, letter],
                 incorrectGuesses: game.word.includes(letter) ? game.incorrectGuesses : game.incorrectGuesses + 1
@@ -484,13 +482,146 @@
         }
 
         // --- LÓGICA DE GATO ---
-        function renderTicTacToeUI(game) { /* ... (sin cambios) ... */ }
-        const handleCellClick = async (index, game) => { /* ... (sin cambios) ... */ };
-        const checkWinner = (board) => { /* ... (sin cambios) ... */ };
+        function renderTicTacToeUI(game) {
+            if (game.status === 'waiting') {
+                document.getElementById('waiting-game-id').textContent = currentGameId;
+                showScreen('waiting'); return;
+            }
+            showScreen('tictactoeGame');
+            const boardEl = document.getElementById('tictactoe-board');
+            boardEl.innerHTML = '';
+            
+            const isHost = currentUser.uid === game.hostId;
+            document.getElementById('tictactoe-player-symbol').textContent = isHost ? game.hostSymbol : game.opponentSymbol;
+
+            game.board.forEach((cell, index) => {
+                const cellEl = document.createElement('div');
+                cellEl.className = 'tictactoe-cell';
+                if(cell) cellEl.classList.add('filled', cell);
+                if(game.winningLine?.includes(index)) cellEl.classList.add('win');
+                cellEl.textContent = cell;
+                if (game.status === 'playing' && game.turn === currentUser.uid && !cell) {
+                    cellEl.addEventListener('click', () => handleCellClick(index, game));
+                }
+                boardEl.appendChild(cellEl);
+            });
+            
+            document.getElementById('tictactoe-game-over').classList.add('hidden');
+            if (game.status === 'playing') {
+                document.getElementById('tictactoe-game-status').textContent = game.turn === currentUser.uid ? "¡Tu Turno!" : "Turno del Oponente";
+            } else if (game.status === 'finished') {
+                const winnerText = document.getElementById('tictactoe-winner-text');
+                if (game.winner === 'draw') winnerText.textContent = "¡Es un Empate!";
+                else {
+                    const playerSymbol = isHost ? game.hostSymbol : game.opponentSymbol;
+                    const winnerSymbol = game.board[game.winningLine[0]];
+                    winnerText.textContent = (playerSymbol === winnerSymbol) ? "¡Felicidades, Ganaste!" : "¡Perdiste!";
+                }
+                document.getElementById('tictactoe-game-status').textContent = "Juego Terminado";
+                setupRematchUI(game, {
+                    gameOverContainer: document.getElementById('tictactoe-game-over'),
+                    rematchBtn: document.getElementById('tictactoe-rematch-btn'),
+                    rematchStatus: document.getElementById('tictactoe-rematch-status')
+                });
+            }
+        }
+        async function handleCellClick(index, game) {
+            if (game.turn !== currentUser.uid || game.board[index] !== null) return;
+            const gameRef = doc(db, "games", currentGameId);
+            const playerSymbol = currentUser.uid === game.hostId ? game.hostSymbol : game.opponentSymbol;
+            const newBoard = [...game.board];
+            newBoard[index] = playerSymbol;
+            const nextTurn = currentUser.uid === game.hostId ? game.opponentId : game.hostId;
+            const winResult = checkWinner(newBoard);
+            let newStatus = 'playing', winner = null, winningLine = null;
+            if (winResult) {
+                newStatus = 'finished';
+                winner = winResult.winner;
+                winningLine = winResult.line;
+            }
+            await updateDoc(gameRef, { board: newBoard, turn: nextTurn, status: newStatus, winner, winningLine });
+        }
+        const checkWinner = (board) => {
+            const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+            for (let i = 0; i < lines.length; i++) {
+                const [a, b, c] = lines[i];
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) return { winner: board[a], line: lines[i] };
+            }
+            if (!board.includes(null)) return { winner: 'draw', line: null };
+            return null;
+        };
 
         // --- LÓGICA DE MEMORIA ---
-        function renderMemoryUI(game) { /* ... (sin cambios) ... */ }
-        const handleCardClick = async (index, game) => { /* ... (sin cambios) ... */ };
+        function renderMemoryUI(game) {
+            if (game.status === 'waiting') {
+                document.getElementById('waiting-game-id').textContent = currentGameId;
+                showScreen('waiting'); return;
+            }
+            showScreen('memoryGame');
+            const boardEl = document.getElementById('memory-board');
+            const p1ScoreEl = document.getElementById('memory-player1-score');
+            const p2ScoreEl = document.getElementById('memory-player2-score');
+            const statusEl = document.getElementById('memory-game-status');
+            boardEl.innerHTML = '';
+
+            p1ScoreEl.textContent = `${game.hostId === currentUser.uid ? 'Tú' : 'Oponente'}: ${game.scores[game.hostId] || 0}`;
+            p2ScoreEl.textContent = game.opponentId ? `${game.opponentId === currentUser.uid ? 'Tú' : 'Oponente'}: ${game.scores[game.opponentId] || 0}`: 'Esperando...';
+
+            game.board.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'memory-card';
+                if (card.isFlipped) cardEl.classList.add('is-flipped');
+                if (card.isMatched) cardEl.classList.add('is-matched');
+                cardEl.innerHTML = `<div class="card-face card-back">?</div><div class="card-face card-front">${card.value}</div>`;
+                if (!card.isMatched && game.status === 'playing' && game.turn === currentUser.uid) {
+                    cardEl.addEventListener('click', () => handleCardClick(index, game));
+                }
+                boardEl.appendChild(cardEl);
+            });
+
+            document.getElementById('memory-game-over').classList.add('hidden');
+            if (game.status === 'playing') {
+                statusEl.textContent = game.turn === currentUser.uid ? "¡Tu Turno!" : "Turno del Oponente";
+                const allMatched = game.board.every(c => c.isMatched);
+                if(allMatched) updateDoc(doc(db, "games", currentGameId), { status: 'finished'});
+            } else if (game.status === 'finished') {
+                const p1s = game.scores[game.hostId], p2s = game.scores[game.opponentId];
+                let msg = "¡Empate!";
+                if(p1s > p2s) msg = game.hostId === currentUser.uid ? "¡Ganaste!" : "¡Perdiste!";
+                if(p2s > p1s) msg = game.opponentId === currentUser.uid ? "¡Ganaste!" : "¡Perdiste!";
+                document.getElementById('memory-winner-text').textContent = msg;
+                statusEl.textContent = "Juego Terminado";
+                setupRematchUI(game, {
+                    gameOverContainer: document.getElementById('memory-game-over'),
+                    rematchBtn: document.getElementById('memory-rematch-btn'),
+                    rematchStatus: document.getElementById('memory-rematch-status')
+                });
+            }
+        }
+        async function handleCardClick(index, game) {
+             if (game.flippedIndices.length >= 2 || game.board[index].isFlipped || game.turn !== currentUser.uid) return;
+            const gameRef = doc(db, "games", currentGameId);
+            const newFlippedIndices = [...game.flippedIndices, index];
+            game.board[index].isFlipped = true;
+            await updateDoc(gameRef, { board: game.board, flippedIndices: newFlippedIndices });
+            if (newFlippedIndices.length === 2) {
+                setTimeout(async () => {
+                    const [i1, i2] = newFlippedIndices;
+                    const card1 = game.board[i1], card2 = game.board[i2];
+                    let nextTurn = game.turn;
+                    if (card1.value === card2.value) {
+                        game.board[i1].isMatched = true;
+                        game.board[i2].isMatched = true;
+                        game.scores[currentUser.uid]++;
+                    } else {
+                        game.board[i1].isFlipped = false;
+                        game.board[i2].isFlipped = false;
+                        nextTurn = game.turn === game.hostId ? game.opponentId : game.hostId;
+                    }
+                    await updateDoc(gameRef, { board: game.board, scores: game.scores, flippedIndices: [], turn: nextTurn });
+                }, 1000);
+            }
+        };
         
         // --- INICIALIZACIÓN ---
         onAuthStateChanged(auth, (user) => {
@@ -505,6 +636,7 @@
         document.getElementById('create-game-btn').addEventListener('click', createGame);
         document.getElementById('join-game-btn').addEventListener('click', joinGame);
         document.getElementById('start-hangman-game-btn').addEventListener('click', startHangmanGame);
+        document.getElementById('waiting-game-id').addEventListener('click', (e) => copyToClipboard(e.target.textContent, e.target));
         
         showScreen('selection');
     </script>
