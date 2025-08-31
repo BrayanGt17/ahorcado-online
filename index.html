@@ -30,13 +30,18 @@
         }
         .copy-btn { cursor: pointer; transition: background-color 0.2s; }
         
+        /* Estilos Ahorcado */
+        .letter { width: 3rem; height: 3rem; font-size: 1.5rem; font-weight: 600; border-bottom: 3px solid #6b7280; display: inline-flex; justify-content: center; align-items: center; margin: 0 0.25rem; color: #111827; }
+        .keyboard-btn { width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; background-color: #e5e7eb; display: flex; justify-content: center; align-items: center; text-transform: uppercase; }
+        .keyboard-btn:hover:not(:disabled) { background-color: #d1d5db; }
+        .keyboard-btn:disabled { background-color: #9ca3af; color: #e5e7eb; cursor: not-allowed; }
+        .keyboard-btn.correct { background-color: #22c55e; color: white; }
+        .keyboard-btn.incorrect { background-color: #ef4444; color: white; }
+        #hangman-svg g line { stroke: #1f2937; stroke-width: 4; stroke-linecap: round; }
+
         /* Estilos Gato (Tic-Tac-Toe) */
         .tictactoe-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-        .tictactoe-cell {
-            width: 100px; height: 100px; background-color: #e0e7ff; border-radius: 0.75rem;
-            display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold;
-            cursor: pointer; transition: background-color 0.2s;
-        }
+        .tictactoe-cell { width: 100px; height: 100px; background-color: #e0e7ff; border-radius: 0.75rem; display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
         .tictactoe-cell:hover:not(.filled) { background-color: #c7d2fe; }
         .tictactoe-cell.filled { cursor: not-allowed; }
         .tictactoe-cell.X { color: #ef4444; }
@@ -62,7 +67,7 @@
             <p class="text-gray-600 mb-8">Elige un juego para empezar.</p>
             <p class="text-sm text-gray-500 mb-4">Tu ID de Jugador: <strong id="player-id-display" class="text-indigo-600">Conectando...</strong></p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button data-game="hangman" class="game-select-btn btn btn-primary w-full sm:w-auto" disabled>Ahorcado (Próximamente)</button>
+                <button data-game="hangman" class="game-select-btn btn btn-primary w-full sm:w-auto">Jugar Ahorcado</button>
                 <button data-game="memory" class="game-select-btn btn btn-secondary w-full sm:w-auto">Jugar Memoria</button>
                 <button data-game="tictactoe" class="game-select-btn btn btn-primary w-full sm:w-auto bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-800">Jugar Gato</button>
             </div>
@@ -89,6 +94,51 @@
             <div id="waiting-game-id" class="copy-btn bg-indigo-100 text-indigo-800 text-2xl font-bold p-3 rounded-lg inline-block mb-6" title="Haz clic para copiar"></div>
             <div class="animate-pulse text-gray-500">Buscando un segundo jugador...</div>
             <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6">Cancelar</button>
+        </div>
+
+        <!-- Pantalla de Creación de Ahorcado -->
+        <div id="create-hangman-screen" class="hidden card text-center">
+             <h2 class="text-2xl font-bold text-gray-800 mb-4">Crea una Partida de Ahorcado</h2>
+             <p class="text-gray-600 mb-2">Establece la palabra secreta para que tu amigo adivine.</p>
+             <div class="max-w-sm mx-auto space-y-4 mt-6">
+                 <input type="password" id="secret-word-input" class="form-input text-center uppercase" placeholder="PALABRA SECRETA">
+                 <input type="text" id="secret-word-hint-input" class="form-input text-center" placeholder="PISTA (OPCIONAL)">
+                 <button id="start-hangman-game-btn" class="btn btn-primary w-full">Comenzar Juego</button>
+             </div>
+              <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6">Cancelar</button>
+        </div>
+
+        <!-- Pantalla de Juego AHORCADO -->
+        <div id="hangman-game-screen" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="card flex flex-col items-center justify-center">
+                    <h2 class="text-xl font-bold text-gray-700 mb-4">Ahorcado</h2>
+                     <svg id="hangman-svg" width="200" height="250" viewBox="0 0 200 250">
+                        <g id="gallow"><line x1="10" y1="240" x2="190" y2="240"></line><line x1="50" y1="240" x2="50" y2="20"></line><line x1="50" y1="20" x2="150" y2="20"></line><line x1="150" y1="20" x2="150" y2="50"></line></g>
+                        <g id="body-parts" class="hidden"><circle cx="150" cy="70" r="20" fill="transparent" stroke="#1f2937" stroke-width="4"></circle><line x1="150" y1="90" x2="150" y2="160"></line><line x1="150" y1="110" x2="120" y2="140"></line><line x1="150" y1="110" x2="180" y2="140"></line><line x1="150" y1="160" x2="120" y2="200"></line><line x1="150" y1="160" x2="180" y2="200"></line></g>
+                    </svg>
+                     <p class="text-gray-500 mt-2">Intentos restantes: <span id="attempts-left" class="font-bold">6</span></p>
+                </div>
+                <div class="card">
+                    <div id="hangman-game-info" class="text-center text-gray-600 mb-6 min-h-[3.5rem]"></div>
+                    <div id="word-display" class="flex justify-center mb-8"></div>
+                    <div class="text-center mb-4">
+                        <button id="show-hint-btn" class="hidden btn btn-secondary btn-sm">Pedir Pista (-1 intento)</button>
+                        <p id="hint-display" class="hidden bg-yellow-100 text-yellow-800 p-3 rounded-lg"><strong>Pista:</strong> <span id="hint-text"></span></p>
+                    </div>
+                    <div id="keyboard" class="grid grid-cols-7 gap-2"></div>
+                    <div id="hangman-game-over" class="hidden text-center mt-4">
+                        <h3 id="hangman-winner-text" class="text-3xl font-bold mb-4"></h3>
+                        <p class="mt-2 text-gray-600">La palabra era: <strong id="correct-word" class="text-indigo-600"></strong></p>
+                        <div id="hangman-rematch-status" class="text-gray-600 my-4"></div>
+                        <div class="flex gap-4 justify-center">
+                            <button id="hangman-rematch-btn" class="btn btn-primary">Pedir Revancha</button>
+                            <button class="back-to-lobby-btn btn btn-secondary">Salir al Lobby</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="back-to-lobby-btn text-indigo-600 hover:underline mt-6 text-center block w-full">Salir de la partida</button>
         </div>
 
         <!-- Pantalla de Juego MEMORIA -->
@@ -152,9 +202,12 @@
 
         const screens = {
             selection: document.getElementById('game-selection-screen'), lobby: document.getElementById('lobby-screen'),
+            createHangman: document.getElementById('create-hangman-screen'),
             waiting: document.getElementById('waiting-screen'), memoryGame: document.getElementById('memory-game-screen'),
-            tictactoeGame: document.getElementById('tictactoe-game-screen'),
+            tictactoeGame: document.getElementById('tictactoe-game-screen'), hangmanGame: document.getElementById('hangman-game-screen'),
         };
+        
+        // --- FUNCIONES ---
         
         const showScreen = (screenName) => {
             Object.values(screens).forEach(s => s.classList.add('hidden'));
@@ -164,37 +217,35 @@
         const goToLobby = (gameType) => {
             currentGameType = gameType;
             let title = '';
+            if (gameType === 'hangman') title = 'Ahorcado';
             if (gameType === 'memory') title = 'Memoria';
-            if (gameType === 'tictactoe') title = 'Gato (Tres en Raya)';
+            if (gameType === 'tictactoe') title = 'Gato';
             document.getElementById('lobby-title').textContent = title;
             showScreen('lobby');
         };
 
-        const resetToLobby = async () => {
-            if (gameUnsubscribe) gameUnsubscribe();
+        async function resetToLobby() {
+            if (gameUnsubscribe) {
+                gameUnsubscribe();
+                gameUnsubscribe = null;
+            }
             if (currentGameId && currentUser) {
                 const gameRef = doc(db, "games", currentGameId);
                 const gameSnap = await getDoc(gameRef);
-                if (gameSnap.exists() && gameSnap.data().hostId === currentUser.uid) await deleteDoc(gameRef);
+                if (gameSnap.exists() && gameSnap.data().hostId === currentUser.uid) {
+                    await deleteDoc(gameRef);
+                }
             }
             currentGameId = null;
             goToLobby(currentGameType);
-        };
-        
-        onAuthStateChanged(auth, (user) => {
-            if (user) { currentUser = user; document.getElementById('player-id-display').textContent = user.uid.substring(0, 8); } 
-            else { signInAnonymously(auth).catch(e => console.error(e)); }
-        });
-        
-        document.querySelectorAll('.game-select-btn').forEach(b => b.addEventListener('click', () => goToLobby(b.dataset.game)));
-        document.querySelectorAll('.back-to-selection-btn').forEach(b => b.addEventListener('click', () => showScreen('selection')));
-        document.querySelectorAll('.back-to-lobby-btn').forEach(b => b.addEventListener('click', resetToLobby));
-        document.getElementById('show-join-form-btn').addEventListener('click', () => document.getElementById('join-game-form').classList.toggle('hidden'));
-        document.getElementById('create-game-btn').addEventListener('click', () => createGame());
-        document.getElementById('join-game-btn').addEventListener('click', () => joinGame());
+        }
 
-        const createGame = async () => {
+        async function createGame() {
             if (!currentUser || !currentGameType) return;
+            if (currentGameType === 'hangman') {
+                showScreen('createHangman');
+                return;
+            }
             const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
             currentGameId = gameId;
             let gameData;
@@ -212,9 +263,9 @@
             listenToGameUpdates(gameId);
             document.getElementById('waiting-game-id').textContent = gameId;
             showScreen('waiting');
-        };
+        }
         
-        const joinGame = async () => {
+        async function joinGame() {
             if (!currentUser) return;
             const gameId = document.getElementById('join-game-id-input').value.trim().toUpperCase();
             if (!gameId) { alert("Ingresa un ID de juego."); return; }
@@ -232,15 +283,18 @@
                 currentGameId = gameId;
                 listenToGameUpdates(gameId);
             } else { alert("Partida no encontrada."); }
-        };
+        }
 
         const listenToGameUpdates = (gameId) => {
             if (gameUnsubscribe) gameUnsubscribe();
             gameUnsubscribe = onSnapshot(doc(db, "games", gameId), (docSnap) => {
-                if (!docSnap.exists()) { alert("La partida ha terminado."); showScreen('selection'); return; }
+                if (!docSnap.exists()) { alert("La partida ha terminado o el anfitrión la ha cancelado."); showScreen('selection'); return; }
                 const gameData = docSnap.data();
+                currentGameId = docSnap.id; 
+                currentGameType = gameData.gameType;
                 if (gameData.gameType === 'tictactoe') renderTicTacToeUI(gameData);
                 else if (gameData.gameType === 'memory') renderMemoryUI(gameData);
+                else if (gameData.gameType === 'hangman') renderHangmanUI(gameData);
             });
         };
         
@@ -250,25 +304,29 @@
             const gameRef = doc(db, "games", currentGameId);
             const gameSnap = await getDoc(gameRef);
             if (!gameSnap.exists()) return;
-
             const gameData = gameSnap.data();
             let rematchRequests = gameData.rematchRequests || [];
             if (rematchRequests.includes(currentUser.uid)) return;
-
             rematchRequests.push(currentUser.uid);
 
             if (rematchRequests.length === 2) {
                 if (gameData.gameType === 'tictactoe') resetTicTacToeGame(gameRef, gameData);
                 if (gameData.gameType === 'memory') resetMemoryGame(gameRef, gameData);
+                if (gameData.gameType === 'hangman') resetHangmanGame(gameRef);
             } else {
                 await updateDoc(gameRef, { rematchRequests });
             }
         };
 
+        const resetHangmanGame = async (gameRef) => {
+             await updateDoc(gameRef, {
+                status: 'waiting_for_word', word: '', hint: '', guessedLetters: [],
+                incorrectGuesses: 0, hintUsed: false, rematchRequests: []
+            });
+        }
         const resetTicTacToeGame = async (gameRef, gameData) => {
             await updateDoc(gameRef, { board: Array(9).fill(null), status: 'playing', turn: gameData.hostId, winner: null, winningLine: null, rematchRequests: [] });
         };
-
         const resetMemoryGame = async (gameRef, gameData) => {
             const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
             const cardValues = [...emojis, ...emojis].sort(() => 0.5 - Math.random());
@@ -276,7 +334,6 @@
             await updateDoc(gameRef, { board, status: 'playing', turn: gameData.hostId, scores: { [gameData.hostId]: 0, [gameData.opponentId]: 0 }, flippedIndices: [], rematchRequests: [] });
         };
         
-        // --- RENDERIZADO COMPLETO DE UI (con Revancha) ---
         function setupRematchUI(game, elements) {
             const requests = game.rematchRequests || [];
             elements.gameOverContainer.classList.remove('hidden');
@@ -300,7 +357,119 @@
             newBtn.addEventListener('click', requestRematch);
         }
 
-        // --- RENDERIZADO UI DE GATO (completo) ---
+        // --- LÓGICA DE AHORCADO ---
+        async function startHangmanGame() {
+            const word = document.getElementById('secret-word-input').value.trim().toUpperCase();
+            const hint = document.getElementById('secret-word-hint-input').value.trim();
+            if (!word || !/^[A-ZÑ]+$/.test(word)) { alert("Palabra inválida."); return; }
+
+            const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            currentGameId = gameId;
+
+            const gameData = {
+                gameType: 'hangman', hostId: currentUser.uid, opponentId: null,
+                status: 'waiting', word, hint, guessedLetters: [], incorrectGuesses: 0,
+                hintUsed: false, rematchRequests: []
+            };
+            await setDoc(doc(db, "games", gameId), gameData);
+            listenToGameUpdates(gameId);
+        }
+
+        function renderHangmanUI(game) {
+            const isHost = currentUser.uid === game.hostId;
+            const isOpponent = currentUser.uid === game.opponentId;
+
+            if (game.status === 'waiting' || (game.status === 'waiting_for_word' && isOpponent)) {
+                document.getElementById('waiting-game-id').textContent = currentGameId;
+                showScreen('waiting');
+                return;
+            }
+            if (game.status === 'waiting_for_word' && isHost) {
+                document.getElementById('secret-word-input').value = '';
+                document.getElementById('secret-word-hint-input').value = '';
+                showScreen('createHangman');
+                return;
+            }
+            
+            showScreen('hangmanGame');
+
+            const MAX_ATTEMPTS = 6;
+            const { word, guessedLetters, incorrectGuesses, status, hint, hintUsed } = game;
+            
+            document.getElementById('word-display').innerHTML = word.split('').map(letter => `<div class="letter">${guessedLetters.includes(letter) ? letter : ''}</div>`).join('');
+            
+            const keyboardContainer = document.getElementById('keyboard');
+            keyboardContainer.innerHTML = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('').map(letter => {
+                const isGuessed = guessedLetters.includes(letter);
+                let btnClass = 'keyboard-btn';
+                if (isGuessed) btnClass += word.includes(letter) ? ' correct' : ' incorrect';
+                return `<button class="${btnClass}" data-letter="${letter}" ${isGuessed || status !== 'playing' || !isOpponent ? 'disabled' : ''}>${letter}</button>`;
+            }).join('');
+            
+            document.querySelectorAll('#body-parts > *').forEach((el, i) => { el.style.visibility = i < incorrectGuesses ? 'visible' : 'hidden'; });
+            document.getElementById('body-parts').classList.toggle('hidden', incorrectGuesses === 0);
+            document.getElementById('attempts-left').textContent = MAX_ATTEMPTS - incorrectGuesses;
+
+            const hintBtn = document.getElementById('show-hint-btn');
+            const hintDisplay = document.getElementById('hint-display');
+            hintBtn.classList.toggle('hidden', !isOpponent || !hint || hintUsed || status !== 'playing');
+            hintDisplay.classList.toggle('hidden', !hintUsed);
+            if(hintUsed) document.getElementById('hint-text').textContent = hint;
+
+            const infoEl = document.getElementById('hangman-game-info');
+            const gameOverEl = document.getElementById('hangman-game-over');
+            gameOverEl.classList.add('hidden');
+            keyboardContainer.style.display = 'grid';
+
+            if (status === 'playing') {
+                infoEl.textContent = isOpponent ? "¡Tu turno! Adivina una letra." : "Tu amigo está adivinando...";
+                const wordGuessed = word && [...word].every(l => guessedLetters.includes(l));
+                if(wordGuessed) updateDoc(doc(db, "games", currentGameId), { status: 'finished', winner: 'opponent' });
+                if(incorrectGuesses >= MAX_ATTEMPTS) updateDoc(doc(db, "games", currentGameId), { status: 'finished', winner: 'host' });
+
+            } else if (status === 'finished') {
+                const winnerText = document.getElementById('hangman-winner-text');
+                const didOpponentWin = game.winner === 'opponent';
+                winnerText.textContent = (isOpponent && didOpponentWin) || (isHost && !didOpponentWin) ? "¡Ganaste!" : "¡Perdiste!";
+                document.getElementById('correct-word').textContent = word;
+                infoEl.textContent = "Juego Terminado";
+                keyboardContainer.style.display = 'none';
+                hintBtn.classList.add('hidden');
+                setupRematchUI(game, {
+                    gameOverContainer: gameOverEl,
+                    rematchBtn: document.getElementById('hangman-rematch-btn'),
+                    rematchStatus: document.getElementById('hangman-rematch-status')
+                });
+            }
+        }
+        
+        document.getElementById('keyboard').addEventListener('click', e => {
+            if(e.target.matches('.keyboard-btn')) handleGuess(e.target.dataset.letter);
+        });
+        document.getElementById('show-hint-btn').addEventListener('click', useHint);
+
+        async function handleGuess(letter) {
+            const gameRef = doc(db, "games", currentGameId);
+            const gameSnap = await getDoc(gameRef);
+            if (!gameSnap.exists()) return;
+            const game = gameSnap.data();
+            if (game.opponentId !== currentUser.uid || game.guessedLetters.includes(letter) || game.status !== 'playing') return;
+            
+            await updateDoc(gameRef, {
+                guessedLetters: [...game.guessedLetters, letter],
+                incorrectGuesses: game.word.includes(letter) ? game.incorrectGuesses : game.incorrectGuesses + 1
+            });
+        }
+        async function useHint() {
+            const gameRef = doc(db, "games", currentGameId);
+            const gameSnap = await getDoc(gameRef);
+            if (!gameSnap.exists()) return;
+            const game = gameSnap.data();
+            if (game.hintUsed || game.opponentId !== currentUser.uid || game.status !== 'playing') return;
+            await updateDoc(gameRef, { hintUsed: true, incorrectGuesses: game.incorrectGuesses + 1 });
+        }
+
+        // --- LÓGICA DE GATO ---
         function renderTicTacToeUI(game) {
             if (game.status === 'waiting') {
                 document.getElementById('waiting-game-id').textContent = currentGameId;
@@ -376,7 +545,7 @@
             return null;
         };
 
-        // --- RENDERIZADO UI DE MEMORIA (completo) ---
+        // --- LÓGICA DE MEMORIA ---
         function renderMemoryUI(game) {
             if (game.status === 'waiting') {
                 document.getElementById('waiting-game-id').textContent = currentGameId;
@@ -448,9 +617,22 @@
                 }, 1000);
             }
         };
-
+        
+        // --- INICIALIZACIÓN ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) { currentUser = user; document.getElementById('player-id-display').textContent = user.uid.substring(0, 8); } 
+            else { signInAnonymously(auth).catch(e => console.error(e)); }
+        });
+        
+        document.querySelectorAll('.game-select-btn').forEach(b => b.addEventListener('click', () => goToLobby(b.dataset.game)));
+        document.querySelectorAll('.back-to-selection-btn').forEach(b => b.addEventListener('click', () => showScreen('selection')));
+        document.querySelectorAll('.back-to-lobby-btn').forEach(b => b.addEventListener('click', resetToLobby));
+        document.getElementById('show-join-form-btn').addEventListener('click', () => document.getElementById('join-game-form').classList.toggle('hidden'));
+        document.getElementById('create-game-btn').addEventListener('click', createGame);
+        document.getElementById('join-game-btn').addEventListener('click', joinGame);
+        document.getElementById('start-hangman-game-btn').addEventListener('click', startHangmanGame);
+        
         showScreen('selection');
-
     </script>
 </body>
 </html>
