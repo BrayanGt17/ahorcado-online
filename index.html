@@ -23,6 +23,7 @@
             text-align: center;
             vertical-align: middle;
             user-select: none;
+            -webkit-user-select: none;
             border: 1px solid transparent;
             padding: 0.75rem 1.5rem;
             font-size: 1rem;
@@ -136,7 +137,7 @@
         <!-- Pantalla de Creación de Juego -->
         <div id="create-game-screen" class="hidden card text-center">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Crea una Partida</h2>
-            <p class="text-gray-600 mb-2">Comparte este ID con tu pareja para que se una:</p>
+            <p class="text-gray-600 mb-2">Comparte este ID con tu Amigo para que se una:</p>
             <div class="bg-indigo-100 text-indigo-800 text-2xl font-bold p-3 rounded-lg inline-block mb-6" id="game-id-display"></div>
             <p class="text-gray-600 mb-4">Ahora, escribe la palabra secreta:</p>
             <div class="max-w-sm mx-auto">
@@ -389,7 +390,7 @@
             
             if (game.status === 'waiting_for_guesser' && currentUser.uid === game.hostId) {
                 showScreen('game');
-                gameInfo.textContent = 'Esperando a que tu pareja se una...';
+                gameInfo.textContent = 'Esperando a que tu amigo se una...';
                 wordDisplay.innerHTML = '';
                 keyboardContainer.innerHTML = '<p class="col-span-7 text-center text-gray-500">El teclado aparecerá cuando comience la partida.</p>';
                 return;
@@ -413,7 +414,7 @@
                  if (isGuesser) {
                      infoText = '¡Es tu turno! Adivina una letra.';
                  } else if(isHost) {
-                     infoText = 'Tu pareja está adivinando la palabra...';
+                     infoText = 'Tu amigo está adivinando la palabra...';
                  }
             }
             
@@ -430,13 +431,13 @@
             }
 
             if (game.status === 'won') {
-                gameOverText.textContent = isGuesser ? "¡Felicidades, has ganado!" : "¡Tu pareja ha ganado!";
+                gameOverText.textContent = isGuesser ? "¡Felicidades, has ganado!" : "¡Tu amigo ha ganado!";
                 gameOverText.className = "text-3xl font-bold text-green-500";
                 correctWordDisplay.textContent = game.word;
                 gameOverMessage.classList.remove('hidden');
                 keyboardContainer.classList.add('hidden');
             } else if (game.status === 'lost') {
-                gameOverText.textContent = isGuesser ? "¡Oh no, has perdido!" : "Tu pareja ha perdido.";
+                gameOverText.textContent = isGuesser ? "¡Oh no, has perdido!" : "Tu amigo ha perdido.";
                 gameOverText.className = "text-3xl font-bold text-red-500";
                 correctWordDisplay.textContent = game.word;
                 gameOverMessage.classList.remove('hidden');
